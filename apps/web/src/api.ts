@@ -4,7 +4,9 @@ const url = import.meta.env.VITE_SUPABASE_URL || '';
 const key = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 export const authConfigured = !!(url && key);
 export const supabase = authConfigured ? createClient(url, key) : null;
-const base = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8787').replace(/\/$/, '');
+const envBase = import.meta.env.VITE_API_BASE_URL || '';
+const localBase = typeof window !== 'undefined' ? (window.localStorage.getItem('eka_api_url') || '') : '';
+const base = (localBase || envBase || (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1' ? '' : 'http://localhost:8787')).replace(/\/$/, '');
 
 export interface UserProfile {
   id: string;
