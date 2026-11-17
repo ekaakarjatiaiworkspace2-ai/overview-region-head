@@ -1,0 +1,19 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:5432:5432"
+    environment:
+      POSTGRES_DB: eka_overview
+      POSTGRES_USER: eka
+      POSTGRES_PASSWORD: eka_local_change_me
+    volumes:
+      - eka_postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U eka -d eka_overview"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+volumes:
+  eka_postgres:

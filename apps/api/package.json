@@ -1,0 +1,29 @@
+{
+  "name": "@eka/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "db:migrate": "tsx src/migrate.ts",
+    "sync:bsi": "tsx src/run-sync.ts bsi",
+    "sync:file": "tsx src/run-sync.ts file"
+  },
+  "dependencies": {
+    "@fastify/cors": "^10.1.0",
+    "@supabase/supabase-js": "^2.50.0",
+    "dotenv": "^16.5.0",
+    "fastify": "^5.2.0",
+    "googleapis": "^150.0.0",
+    "pg": "^8.14.0",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.0",
+    "@types/pg": "^8.11.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.8.0"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "name": "eka-management-overview",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": ["apps/api", "apps/web"],
+  "scripts": {
+    "mulai": "powershell -ExecutionPolicy Bypass -File ./mulai.ps1",
+    "dev": "npm run dev -w @eka/api & npm run dev -w @eka/web & wait",
+    "dev:api": "npm run dev -w @eka/api",
+    "dev:web": "npm run dev -w @eka/web",
+    "build": "npm run build -w @eka/api && npm run build -w @eka/web",
+    "build:api": "npm run build -w @eka/api",
+    "start:api": "npm run start -w @eka/api",
+    "db:migrate": "npm run db:migrate -w @eka/api",
+    "sync:bsi": "npm run sync:bsi -w @eka/api",
+    "sync:file": "npm run sync:file -w @eka/api",
+    "test": "node --test apps/api/test/*.test.mjs"
+  },
+  "engines": {"node": ">=22"}
+}
