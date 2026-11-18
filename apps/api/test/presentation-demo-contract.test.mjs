@@ -15,7 +15,9 @@ function load(filename,modules={}) {
   new Function('require','module','exports',compiled.outputText)((name)=>{if(name in modules)return modules[name];throw Error(`Unexpected dependency ${name}`)},module,module.exports);
   return module.exports;
 }
-const preview=load('preview.ts');
+const bsiDataset = JSON.parse(fs.readFileSync(path.join(root, 'data/bsi-dataset.json'), 'utf8'));
+bsiDataset.default = bsiDataset;
+const preview=load('preview.ts', {'./data/bsi-dataset.json': bsiDataset});
 const model=load('presentation-model.ts',{'./preview':preview});
 
 test('model slide ids and order preserve relevant V5.4 names',()=>{

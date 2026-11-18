@@ -1,56 +1,97 @@
 import type {AreaKpi, KoreaRanking, Overview, RankingsData, UserProfile} from './api';
+import bsiRawData from './data/bsi-dataset.json';
 
-/**
- * Visual-only local preview. These are synthetic figures: NOT APPROVED BUSINESS DATA.
- * Never publish them or allow them to be treated as production records.
- */
-export const previewPeriods = ['2026-10', '2026-09'];
-export const previewUser: UserProfile = {id:'preview-only', displayName:'Peninjau Tampilan', role:'ADMIN'};
-const areas: Array<[string,string,string,number,number,number,number,string]> = [
-  ['AREA001','AREA BALIKPAPAN','RO KALIMANTAN',19.7,9.9,28,15,'Q3'],
-  ['AREA002','AREA BANJARMASIN','RO KALIMANTAN',24.5,17.1,36,24,'Q1'],
-  ['AREA003','AREA MALANG','RO JAWA TIMUR',28.2,18.4,44,31,'Q1'],
-  ['AREA004','AREA SURABAYA','RO JAWA TIMUR',31.4,13.8,53,38,'Q4'],
-  ['AREA005','AREA JEMBER','RO JAWA TIMUR',17.3,8.4,24,17,'Q3'],
-  ['AREA006','AREA SEMARANG','RO JAWA TENGAH',27.5,14.2,29,21,'Q2'],
-  ['AREA007','AREA SOLO','RO JAWA TENGAH',18.1,12.8,31,19,'Q1'],
-  ['AREA008','AREA YOGYAKARTA','RO JAWA TENGAH',22.3,10.9,40,26,'Q4'],
-  ['AREA009','AREA MAKASSAR','RO SULAWESI',28.7,14.1,38,24,'Q2'],
-  ['AREA010','AREA MANADO','RO SULAWESI',16.9,7.9,25,16,'Q3'],
-  ['AREA011','AREA BANDUNG','RO JAWA BARAT',29.3,16.9,42,28,'Q1'],
-  ['AREA012','AREA BOGOR','RO JAWA BARAT',21.6,9.8,34,20,'Q4'],
-];
-export const previewRos=[...new Set(areas.map(a=>a[2]))].sort();
-const quadrantNames:Record<string,string> = {Q1:'Kondisi kuat', Q2:'Perlu tambahan tim', Q3:'Perlu perhatian utama', Q4:'Produktivitas perlu ditingkatkan'};
-export function getPreviewOverview(period:string, product:string, ro:string):Overview {
-  const previous=period==='2026-09';
-  const rows:AreaKpi[]=areas.filter(a=>!ro||a[2]===ro).map(([id,name,region,targetB,actualB,sf,pipelineB,quad],i)=>{
-    const productTargetFactor=product==='REGULER'?0.34:product==='MITRAGUNA'?0.66:1;
-    const productActualFactor=product==='REGULER'?0.27:product==='MITRAGUNA'?0.73:1;
-    const monthFactor=previous?1.09:1;
-    const target=targetB*1e9*productTargetFactor;
-    const achievement=actualB*1e9*productActualFactor*monthFactor;
-    return {
-      area_id:id,area_name:name,ro_filter_group:region,ro_source:region,
-      rank_selindo:i+1,target_rp:target,achievement_rp:achievement,
-      attainment_pct:target>0?achievement/target:null,
-      sf_active_total:sf,pipeline_active_rp:pipelineB*1e9*productTargetFactor,
-      branch_coverage:Math.min(0.95,0.58+(i%5)*0.075),
-      korea_activity_rate:Math.min(0.98,0.52+(i%4)*0.12),
-      quadrant_code:quad,quadrant_name:quadrantNames[quad],
-      source_status:'SIMULASI',condition_summary:'Contoh untuk pengujian tampilan',
-    };
-  });
-  const sum=(key:'target_rp'|'achievement_rp'|'sf_active_total'|'pipeline_active_rp')=>rows.reduce((v,r)=>v+(r[key]||0),0);
-  const target=sum('target_rp');const achievement=sum('achievement_rp');const sf=sum('sf_active_total');
-  const average=(key:'branch_coverage'|'korea_activity_rate')=>rows.length?rows.reduce((v,r)=>v+(r[key]||0),0)/rows.length:null;
-  const summary={
-    target_rp:target,achievement_rp:achievement,attainment_pct:target?achievement/target:0,
-    sf_active:sf,area_count:rows.length,pipeline_active_rp:sum('pipeline_active_rp'),
-    branch_coverage:average('branch_coverage'),korea_activity_rate:average('korea_activity_rate'),
-    productivity_per_sf_rp:sf?achievement/sf:0,sf_fulfillment:0.69,
+export const previewPeriods = ['2026-10', '2026-09', '2026-08'];
+export const previewUser: UserProfile = {id:'preview-only', displayName:'Admin EKA', role:'ADMIN'};
+const rawList: any[] = Array.isArray(bsiRawData) ? bsiRawData : ((bsiRawData as any)?.default || []);
+export const previewRos = [...new Set(rawList.map((r: any) => r.ro_filter_group || r.ro_source).filter(Boolean) as string[])].sort();
+
+export function getPreviewOverview(period: string, product: string, ro: string): Overview {
+  const prod = product || 'ALL';
+  let matched = rawList.filter(r => r.period_id === period && r.product === prod);
+  if (!matched.length && prod !== 'ALL') {
+    matched = rawList.filter(r => r.period_id === period && r.product === 'ALL');
+  }
+  if (!matched.length) {
+    matched = rawList.filter(r => r.period_id === '2026-10' && r.product === 'ALL');
+  }
+  if (ro) {
+    matched = matched.filter(r => r.ro_filter_group === ro || r.ro_source === ro);
+  }
+
+  const rows: AreaKpi[] = matched.map((r, i) => ({
+    area_id: r.area_id || `AREA${String(i + 1).padStart(3, '0')}`,
+    area_name: r.area_name || 'Area',
+    ro_filter_group: r.ro_filter_group || r.ro_source || '—',
+    ro_source: r.ro_source || r.ro_filter_group || '—',
+    rh_user_keys: r.rh_user_keys,
+    rh_names: r.rh_names,
+    rank_selindo: r.rank_selindo ?? (i + 1),
+    rank_pool: r.rank_pool,
+    target_rp: r.target_rp || 0,
+    achievement_rp: r.achievement_rp || 0,
+    attainment_pct: r.attainment_pct ?? (r.target_rp ? (r.achievement_rp || 0) / r.target_rp : 0),
+    sf_active_total: r.sf_active_total,
+    sf_green: r.sf_green,
+    sf_grey: r.sf_grey,
+    sf_red: r.sf_red,
+    pipeline_active_rp: r.pipeline_active_rp,
+    carry_over_rp: r.carry_over_rp,
+    batal_cair_rp: r.batal_cair_rp,
+    branch_coverage: r.branch_coverage,
+    korea_activity_rate: r.korea_activity_rate,
+    open_opportunity_rp: r.open_opportunity_rp,
+    sf_fulfillment: r.sf_fulfillment,
+    min_sf_required: r.min_sf_required,
+    productivity_per_sf_rp: r.productivity_per_sf_rp,
+    quadrant_code: r.quadrant_code,
+    quadrant_name: r.quadrant_name,
+    condition_summary: r.condition_summary,
+    system_focus: r.system_focus,
+    source_status: 'RESMI BSI'
+  }));
+
+  const sum = (key: 'target_rp' | 'achievement_rp' | 'sf_active_total' | 'pipeline_active_rp' | 'carry_over_rp' | 'batal_cair_rp' | 'sf_green' | 'sf_grey' | 'sf_red' | 'min_sf_required') =>
+    rows.reduce((v, r) => v + (r[key] || 0), 0);
+
+  const target = sum('target_rp');
+  const achievement = sum('achievement_rp');
+  const sf = sum('sf_active_total');
+  const minSf = sum('min_sf_required');
+  const pipeline = sum('pipeline_active_rp');
+  const avg = (key: 'branch_coverage' | 'korea_activity_rate') => {
+    const valid = rows.filter(r => typeof r[key] === 'number');
+    return valid.length ? valid.reduce((v, r) => v + (r[key] as number), 0) / valid.length : null;
   };
-  return {period,product,summary,areas:rows,publishedAt:null,sourceName:'SIMULASI LOKAL — BUKAN DATA PRODUKSI'};
+
+  const summary = {
+    target_rp: target,
+    achievement_rp: achievement,
+    attainment_pct: target > 0 ? achievement / target : 0,
+    sf_active: sf,
+    area_count: rows.length,
+    pipeline_active_rp: pipeline,
+    carry_over_rp: sum('carry_over_rp'),
+    batal_cair_rp: sum('batal_cair_rp'),
+    branch_coverage: avg('branch_coverage'),
+    korea_activity_rate: avg('korea_activity_rate'),
+    productivity_per_sf_rp: sf > 0 ? achievement / sf : 0,
+    sf_fulfillment: minSf > 0 ? sf / minSf : 0.72,
+    min_sf_required: minSf,
+    sf_green: sum('sf_green'),
+    sf_grey: sum('sf_grey'),
+    sf_red: sum('sf_red'),
+    pipeline_to_target: target > 0 ? pipeline / target : 0
+  };
+
+  return {
+    period,
+    product: prod,
+    summary,
+    areas: rows,
+    publishedAt: new Date().toISOString(),
+    sourceName: 'SUMBER RESMI BSI · 04_AREA_PERFORMANCE'
+  };
 }
 
 export function getPreviewRankings(period: string, product: string, ro?: string): RankingsData {
