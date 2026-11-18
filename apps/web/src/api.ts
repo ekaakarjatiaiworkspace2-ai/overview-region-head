@@ -389,7 +389,13 @@ export async function request<T>(
     ...options,
     headers
   });
+  const contentType = r.headers.get('content-type') || '';
+  if (!contentType.includes('application/json')) {
+    throw new Error('Endpoint backend API belum terhubung.');
+  }
   const body = await r.json().catch(() => ({error: 'Respons server tidak valid.'}));
-  if (!r.ok) throw new Error(body.error || `HTTP ${r.status}`);
+  if (!r.ok || (body && typeof body === 'object' && 'error' in body && body.error)) {
+    throw new Error(body?.error || `HTTP ${r.status}`);
+  }
   return body as T;
 }

@@ -17,10 +17,11 @@ export function CapacityView({data, loading}: {data: CapacityData | null; loadin
 
   const s = data?.summary;
   const filteredAreas = useMemo(() => {
-    if (!data?.areas) return [];
-    if (filterColor === 'GAP') return data.areas.filter(a => a.sf_fulfillment < 0.9);
-    if (filterColor === 'OK') return data.areas.filter(a => a.sf_fulfillment >= 0.9);
-    return data.areas;
+    const list = data?.areas || [];
+    if (!list.length) return [];
+    if (filterColor === 'GAP') return list.filter(a => a.sf_fulfillment < 0.9);
+    if (filterColor === 'OK') return list.filter(a => a.sf_fulfillment >= 0.9);
+    return list;
   }, [data?.areas, filterColor]);
 
   if (loading) {

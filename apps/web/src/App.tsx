@@ -445,7 +445,7 @@ function Dashboard({session, onLogout, preview = false}: {session: Session | nul
   // Cascading lists computation
   const availableRos = useMemo(() => {
     if (scopesData?.ros?.length) return scopesData.ros.map(r => r.ro_name);
-    if (data?.areas) {
+    if (data?.areas?.length) {
       return [...new Set(data.areas.map(a => a.ro_filter_group || a.ro_source).filter(Boolean) as string[])].sort();
     }
     return options;
@@ -453,7 +453,7 @@ function Dashboard({session, onLogout, preview = false}: {session: Session | nul
 
   const availableRhs = useMemo(() => {
     if (!scopesData?.rhs?.length) {
-      if (data?.areas) {
+      if (data?.areas?.length) {
         let filtered = data.areas;
         if (ro) filtered = filtered.filter(a => a.ro_filter_group === ro || a.ro_source === ro);
         const list = [...new Set(filtered.map(a => a.rh_names || a.rh_user_keys).filter(Boolean) as string[])].sort();
@@ -462,12 +462,12 @@ function Dashboard({session, onLogout, preview = false}: {session: Session | nul
       return [];
     }
     if (!ro) return scopesData.rhs;
-    return scopesData.rhs.filter(r => r.ro_name === ro);
+    return (scopesData.rhs || []).filter(r => r.ro_name === ro);
   }, [scopesData, data, ro]);
 
   const availableAreas = useMemo(() => {
     if (!scopesData?.areas?.length) {
-      if (data?.areas) {
+      if (data?.areas?.length) {
         let filtered = data.areas;
         if (ro) filtered = filtered.filter(a => a.ro_filter_group === ro || a.ro_source === ro);
         if (rh) filtered = filtered.filter(a => a.rh_user_keys === rh || a.rh_names?.includes(rh));
@@ -481,7 +481,7 @@ function Dashboard({session, onLogout, preview = false}: {session: Session | nul
       }
       return [];
     }
-    let list = scopesData.areas;
+    let list = scopesData.areas || [];
     if (ro) list = list.filter(a => a.ro_name === ro);
     if (rh) list = list.filter(a => a.rh_key === rh || a.rh_name === rh);
     return list;
@@ -527,13 +527,21 @@ function Dashboard({session, onLogout, preview = false}: {session: Session | nul
       request<Overview>(`/api/v1/overview?${mtgQs}`, session).catch(() => null)
     ]).then(([d, reg, mtg]) => {
       if (cancelled) return;
-      setData(d);
-      if (reg) setRegularData(reg);
-      if (mtg) setMitragunaData(mtg);
-      if (!ro) {
-        setOptions([...new Set(d.areas.map(a => a.ro_filter_group || a.ro_source).filter((x): x is string => !!x))].sort());
+      if (d && Array.isArray(d.areas)) {
+        setData(d);
+        if (reg && Array.isArray(reg.areas)) setRegularData(reg);
+        if (mtg && Array.isArray(mtg.areas)) setMitragunaData(mtg);
+        if (!ro) {
+          setOptions([...new Set(d.areas.map(a => a.ro_filter_group || a.ro_source).filter((x): x is string => !!x))].sort());
+        }
+      } else {
+        const fallback = getPreviewOverview(period, product, ro);
+        setData(fallback);
+        setRegularData(getPreviewOverview(period, 'REGULER', ro));
+        setMitragunaData(getPreviewOverview(period, 'MITRAGUNA', ro));
+        setOptions(previewRos);
       }
-    }).catch(err => {
+    }).catch(() => {
       if (!cancelled) {
         const fallback = getPreviewOverview(period, product, ro);
         setData(fallback);
@@ -780,7 +788,7 @@ function Dashboard({session, onLogout, preview = false}: {session: Session | nul
   }
 
   const s = data?.summary;
-  const q = Object.fromEntries(['Q1', 'Q2', 'Q3', 'Q4'].map(k => [k, data?.areas.filter(a => a.quadrant_code === k).length || 0]));
+  const q = Object.fromEntries(['Q1', 'Q2', 'Q3', 'Q4'].map(k => [k, (data?.areas || []).filter(a => a.quadrant_code === k).length || 0]));
 
   const livePresentationData = data ? {
     period,

@@ -51,10 +51,11 @@ function Bars({rows, field = 'achievement_rp'}: {rows: Overview['areas']; field?
 
 function SlideCanvas({slide, data, index, total, isLive}: {slide: DemoSlide; data: PresentationData; index: number; total: number; isLive?: boolean}) {
   const overview = slide.product === 'REGULER' ? data.regular : slide.product === 'MITRAGUNA' ? data.mitraguna : data.overview;
-  const s = overview.summary;
+  const s = overview?.summary;
   const scope = data.ro || 'Seluruh Regional';
-  const q3 = overview.areas.filter(a => a.quadrant_code === 'Q3').length;
-  const q4 = overview.areas.filter(a => a.quadrant_code === 'Q4').length;
+  const overviewAreas = overview?.areas || [];
+  const q3 = overviewAreas.filter(a => a.quadrant_code === 'Q3').length;
+  const q4 = overviewAreas.filter(a => a.quadrant_code === 'Q4').length;
   const gap = s ? Math.max(0, s.target_rp - s.achievement_rp) : null;
   const isCover = slide.kind === 'cover';
 
