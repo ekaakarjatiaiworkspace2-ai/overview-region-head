@@ -5,7 +5,7 @@ import { pool } from './db.js';
 const client = createClient(cfg.supabaseUrl, cfg.supabaseAnonKey);
 
 async function registerTestAdmin() {
-  const email = process.argv[2] || 'admin@eka.local';
+  const email = process.argv[2] || 'admin@eka.co.id';
   const password = process.argv[3] || 'PasswordEka2026!';
   const displayName = process.argv[4] || 'Admin EKA';
 
