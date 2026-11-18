@@ -1,7 +1,7 @@
 import {createClient, type Session} from '@supabase/supabase-js';
 
-const url = import.meta.env.VITE_SUPABASE_URL || '';
-const key = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+const url = import.meta.env.VITE_SUPABASE_URL || 'https://cvsvwhuobrdzgnfthejq.supabase.co';
+const key = import.meta.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_UHijTEt8_OtJb2ShDPiArg_53_6Zf64';
 export const authConfigured = !!(url && key);
 export const supabase = authConfigured ? createClient(url, key) : null;
 const envBase = import.meta.env.VITE_API_BASE_URL || '';

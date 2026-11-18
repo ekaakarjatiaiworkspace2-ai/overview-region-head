@@ -22,7 +22,7 @@ import {DevelopmentView} from './DevelopmentView';
 import {RankingView} from './RankingView';
 import {SyncRunsView} from './SyncRunsView';
 
-const previewEnabled = import.meta.env.DEV || import.meta.env.VITE_ENABLE_PREVIEW === 'true';
+const previewEnabled = import.meta.env.DEV || import.meta.env.VITE_ENABLE_PREVIEW !== 'false';
 
 const idMoney = new Intl.NumberFormat('id-ID', {maximumFractionDigits: 0});
 const idPct = new Intl.NumberFormat('id-ID', {style: 'percent', maximumFractionDigits: 1});
