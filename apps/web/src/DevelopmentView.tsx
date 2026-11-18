@@ -1,4 +1,4 @@
-import {useState, type FormEvent} from 'react';
+import {useState, useEffect, type FormEvent} from 'react';
 import {Plus, Trash2, Edit3, Send, Sparkles} from 'lucide-react';
 import type {ProjectionData, DevelopmentPlan, AreaKpi} from './api';
 
@@ -34,6 +34,14 @@ export function DevelopmentView({
   const [driverText, setDriverText] = useState(projection?.driver_text || '');
   const [savingProj, setSavingProj] = useState(false);
   const [projSavedMsg, setProjSavedMsg] = useState('');
+
+  useEffect(() => {
+    if (projection) {
+      setProjRp(String(projection.projection_rp || ''));
+      setNextProjRp(String(projection.next_projection_rp || ''));
+      setDriverText(projection.driver_text || '');
+    }
+  }, [projection]);
 
   // Plan Modal state
   const [showModal, setShowModal] = useState(false);

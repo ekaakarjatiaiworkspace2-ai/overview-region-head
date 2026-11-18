@@ -346,6 +346,14 @@ export function PresentationStudio({
   const active = slides.find(s => s.id === activeId) || slides[0];
   const shown = visibleSlides(slides);
 
+  if (!active || !slides.length) {
+    return (
+      <div className="center-loading" style={{minHeight: '300px'}}>
+        Menyiapkan dokumen presentasi...
+      </div>
+    );
+  }
+
   const patch = (edit: Partial<SlideEdit>) => {
     setSlides(prev => prev.map(s => s.id === active.id ? {...s, ...edit} : s));
     setSaved(false);

@@ -62,9 +62,10 @@ export function BarriersView({data, loading}: {data: BarriersData | null; loadin
       </div>
 
       <div style={{display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '24px'}}>
-        {data.allBarriers.map((b, idx) => {
-          const sevPct = Math.round(b.severity * 100);
-          const isCritical = b.severity >= 0.4;
+        {(data.allBarriers || data.barriers || []).map((b, idx) => {
+          const sev = b.severity ?? 0.3;
+          const sevPct = Math.round(sev <= 1 ? sev * 100 : sev);
+          const isCritical = sev >= 0.4 || sev >= 40;
           return (
             <div
               key={b.code}
@@ -139,7 +140,7 @@ export function BarriersView({data, loading}: {data: BarriersData | null; loadin
               </tr>
             </thead>
             <tbody>
-              {data.pipelineReasons.map((r, i) => (
+              {(data.pipelineReasons || []).map((r, i) => (
                 <tr key={r.category + i}>
                   <td><span className="status-pill neutral">{r.category}</span></td>
                   <td><strong>{r.reason}</strong></td>

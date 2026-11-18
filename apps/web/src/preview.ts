@@ -166,3 +166,262 @@ export function getPreviewRankings(period: string, product: string, ro?: string)
     sfRankings
   };
 }
+
+import type {HistoryData, HistoryMonth, PotentialData, CapacityData, BarriersData, ProjectionData, DevelopmentPlan, Summary} from './api';
+
+function getFallbackSummary(ov: {summary: Summary | null}): Summary {
+  return ov.summary || {
+    target_rp: 285.5e9,
+    achievement_rp: 154.2e9,
+    attainment_pct: 0.54,
+    sf_active: 424,
+    area_count: 12,
+    pipeline_active_rp: 279e9,
+    carry_over_rp: 45e9,
+    batal_cair_rp: 12e9,
+    branch_coverage: 0.711,
+    korea_activity_rate: 0.70,
+    productivity_per_sf_rp: 363.7e6,
+    sf_fulfillment: 0.69,
+    min_sf_required: 560,
+    sf_green: 245,
+    sf_grey: 102,
+    sf_red: 77,
+    pipeline_to_target: 0.98
+  };
+}
+
+export function getPreviewHistory(period: string, product: string, ro?: string): HistoryData {
+  const ov = getPreviewOverview(period, product, ro || '');
+  const sum = getFallbackSummary(ov);
+  const months: HistoryMonth[] = [
+    { month_num: 5, month: 'Mei 2026', period_id: '2026-05', target_rp: sum.target_rp * 0.82, actual_rp: sum.target_rp * 0.74, attainment_pct: 0.902, sf_active: Math.round(sum.sf_active * 0.9), productivity_per_sf_rp: 320e6, noa: 240, is_snapshot: false, mom_growth: 0.05 },
+    { month_num: 6, month: 'Juni 2026', period_id: '2026-06', target_rp: sum.target_rp * 0.86, actual_rp: sum.target_rp * 0.81, attainment_pct: 0.941, sf_active: Math.round(sum.sf_active * 0.92), productivity_per_sf_rp: 335e6, noa: 265, is_snapshot: false, mom_growth: 0.09 },
+    { month_num: 7, month: 'Juli 2026', period_id: '2026-07', target_rp: sum.target_rp * 0.90, actual_rp: sum.target_rp * 0.88, attainment_pct: 0.977, sf_active: Math.round(sum.sf_active * 0.95), productivity_per_sf_rp: 350e6, noa: 290, is_snapshot: false, mom_growth: 0.08 },
+    { month_num: 8, month: 'Agustus 2026', period_id: '2026-08', target_rp: sum.target_rp * 0.94, actual_rp: sum.target_rp * 0.91, attainment_pct: 0.968, sf_active: Math.round(sum.sf_active * 0.98), productivity_per_sf_rp: 345e6, noa: 310, is_snapshot: false, mom_growth: 0.03 },
+    { month_num: 9, month: 'September 2026', period_id: '2026-09', target_rp: sum.target_rp * 0.98, actual_rp: sum.target_rp * 0.95, attainment_pct: 0.969, sf_active: sum.sf_active, productivity_per_sf_rp: 358e6, noa: 330, is_snapshot: false, mom_growth: 0.04 },
+    { month_num: 10, month: 'Oktober 2026', period_id: '2026-10', target_rp: sum.target_rp, actual_rp: sum.achievement_rp, attainment_pct: sum.attainment_pct, sf_active: sum.sf_active, productivity_per_sf_rp: sum.productivity_per_sf_rp, noa: 360, is_snapshot: true, mom_growth: 0.07 },
+  ];
+
+  const totalAct = ov.areas.reduce((s, a) => s + (a.achievement_rp || 0), 0) || 1;
+  const contribution = ov.areas.map(a => ({
+    area_id: a.area_id,
+    area_name: a.area_name,
+    achievement_rp: a.achievement_rp || 0,
+    target_rp: a.target_rp || 0,
+    attainment_pct: a.attainment_pct || 0,
+    contribution_pct: (a.achievement_rp || 0) / totalAct,
+    rank_selindo: a.rank_selindo || 1,
+    quadrant_code: a.quadrant_code || 'Q1',
+    quadrant_name: a.quadrant_name || 'Kondisi kuat'
+  }));
+
+  return {
+    months,
+    current: sum,
+    contribution,
+    latestPeriod: period
+  };
+}
+
+export function getPreviewPotential(period: string, product: string, ro?: string): PotentialData {
+  const ov = getPreviewOverview(period, product, ro || '');
+  const areas = ov.areas.map(a => {
+    const regOpen = Math.round((a.target_rp || 10e9) * 0.35);
+    const slaOpen = Math.round((a.target_rp || 10e9) * 0.25);
+    const prapOpen = Math.round((a.target_rp || 10e9) * 0.20);
+    const totalOpen = regOpen + slaOpen + prapOpen;
+    return {
+      area_id: a.area_id,
+      area_name: a.area_name,
+      ro_source: a.ro_filter_group || a.ro_source || '—',
+      reguler_open_rp: regOpen,
+      reguler_open_noa: Math.round(regOpen / 250e6),
+      sla_open_rp: slaOpen,
+      prap_open_rp: prapOpen,
+      total_open_rp: totalOpen,
+      total_open_noa: Math.round(totalOpen / 250e6),
+      sf_fulfillment: 0.72,
+      productivity_per_sf_rp: a.sf_active_total ? (a.achievement_rp || 0) / a.sf_active_total : 0,
+      branch_coverage: a.branch_coverage || 0.75,
+      achievement_rp: a.achievement_rp || 0,
+      quadrant_code: a.quadrant_code,
+      quadrant_name: a.quadrant_name,
+      rank_selindo: a.rank_selindo
+    };
+  });
+
+  const sumKey = (k: 'reguler_open_rp' | 'sla_open_rp' | 'prap_open_rp' | 'total_open_rp' | 'total_open_noa') => areas.reduce((s, a) => s + (a[k] || 0), 0);
+  const regTot = sumKey('reguler_open_rp');
+  const slaTot = sumKey('sla_open_rp');
+  const prapTot = sumKey('prap_open_rp');
+
+  const topBranches = [
+    { branch_code: 'KC001', branch_name: 'KC SURABAYA DARMO', area_name: 'AREA SURABAYA', sf_total: 18, coverage_status: 'OPTIMAL', reguler_open_rp: 5.4e9, sla_open_rp: 3.2e9, prap_open_rp: 2.1e9, total_open_rp: 10.7e9 },
+    { branch_code: 'KC002', branch_name: 'KC BANDUNG ASIA AFRIKA', area_name: 'AREA BANDUNG', sf_total: 16, coverage_status: 'OPTIMAL', reguler_open_rp: 4.8e9, sla_open_rp: 2.9e9, prap_open_rp: 1.9e9, total_open_rp: 9.6e9 },
+    { branch_code: 'KC003', branch_name: 'KC MAKASSAR RATULANGI', area_name: 'AREA MAKASSAR', sf_total: 14, coverage_status: 'CUKUP', reguler_open_rp: 4.2e9, sla_open_rp: 2.5e9, prap_open_rp: 1.6e9, total_open_rp: 8.3e9 },
+    { branch_code: 'KC004', branch_name: 'KC MALANG KAWI', area_name: 'AREA MALANG', sf_total: 12, coverage_status: 'OPTIMAL', reguler_open_rp: 3.8e9, sla_open_rp: 2.2e9, prap_open_rp: 1.5e9, total_open_rp: 7.5e9 },
+  ];
+
+  return {
+    summary: {
+      reguler_open_rp: regTot,
+      reguler_open_noa: Math.round(regTot / 250e6),
+      sla_open_rp: slaTot,
+      sla_open_noa: Math.round(slaTot / 250e6),
+      prap_open_rp: prapTot,
+      prap_open_noa: Math.round(prapTot / 250e6),
+      total_open_rp: regTot + slaTot + prapTot,
+      total_open_noa: Math.round((regTot + slaTot + prapTot) / 250e6),
+      mitraguna_total_rp: Math.round(regTot * 0.6),
+      asabri_total_rp: Math.round(prapTot * 0.7),
+      source_record_count: areas.length * 15
+    },
+    areas,
+    topBranches,
+    sourceGranularity: 'Area & Unit Cabang Prioritas',
+    sourceWarning: 'Data potensi ruang pertumbuhan berbasis SLA Realtime, Prapen Prioritas, dan ASABRI.'
+  };
+}
+
+export function getPreviewCapacity(period: string, product: string, ro?: string): CapacityData {
+  const ov = getPreviewOverview(period, product, ro || '');
+  const sum = getFallbackSummary(ov);
+  const areas = ov.areas.map(a => {
+    const totalSf = a.sf_active_total || 20;
+    const green = Math.round(totalSf * 0.58);
+    const grey = Math.round(totalSf * 0.24);
+    const red = Math.max(0, totalSf - green - grey);
+    return {
+      area_id: a.area_id,
+      area_name: a.area_name,
+      ro_source: a.ro_filter_group || a.ro_source || '—',
+      sf_active: totalSf,
+      min_sf_required: Math.round(totalSf * 1.25),
+      sf_fulfillment: 0.75,
+      sf_green: green,
+      sf_grey: grey,
+      sf_red: red,
+      productivity_per_sf_rp: totalSf ? (a.achievement_rp || 0) / totalSf : 0,
+      korea_activity_rate: a.korea_activity_rate || 0.88,
+      branch_coverage: a.branch_coverage || 0.72,
+      quadrant_code: a.quadrant_code,
+      quadrant_name: a.quadrant_name
+    };
+  });
+
+  return {
+    summary: {
+      ...sum,
+      productivity_baseline: 350e6,
+      coverage_target: 0.85,
+      korea_activity_target: 0.90
+    },
+    areas
+  };
+}
+
+export function getPreviewBarriers(period: string, product: string, ro?: string): BarriersData {
+  const ov = getPreviewOverview(period, product, ro || '');
+  const sum = getFallbackSummary(ov);
+  const items = [
+    { code: 'B01', title: 'Aktivasi Sales Force Merah Masih Tertahan', severity: 4, evidence: 'Terdapat 58 Sales Force (14%) dengan pencairan di bawah standar minimal Rp 150 jt/bulan.', meaning: 'Perlu program pendampingan intensif dan evaluasi mingguan oleh Koordinator Area.' },
+    { code: 'B02', title: 'Pipeline Tertahan di Tahap Dokumen & Taksasi', severity: 3, evidence: 'Sebesar Rp 54 M berkas taksasi tertahan > 14 hari di cabang pembiayaan.', meaning: 'Diperlukan koordinasi percepatan jadwal taksasi dan jemput bola berkas pemohon.' },
+    { code: 'B03', title: 'Rasio Cakupan Cabang Belum Merata', severity: 3, evidence: '28% cabang binaan memiliki rasio coverage di bawah 65%.', meaning: 'Penugasan dan rotasi Sales Force aktif ke cabang-cabang berpotensi tinggi.' },
+    { code: 'B04', title: 'Aktivitas Visit Koordinator Area (Korea)', severity: 2, evidence: 'Rata-rata aktivitas visit Korea baru mencapai 70% dari target minimal 85%.', meaning: 'Pengawasan logbook harian Korea dan checklist supervisi lapangan.' }
+  ];
+
+  const pipelineReasons = [
+    { category: 'DOKUMEN', reason: 'Persyaratan berkas pemohon belum lengkap', count: 48, amount_rp: 24.5e9, followup: 'Asistensi jemput bola dokumen oleh SF pendamping' },
+    { category: 'TAKSASI', reason: 'Menunggu jadwal taksasi jaminan appraisal', count: 32, amount_rp: 18.2e9, followup: 'Eskalasi jadwal prioritas ke Pincab BSI setempat' },
+    { category: 'VERIFIKASI', reason: 'Proses konfirmasi instansi/bendahara gaji mitra', count: 21, amount_rp: 11.3e9, followup: 'Kunjungan bersama Korea ke instansi mitra BUMN/ASN' },
+  ];
+
+  return {
+    summary: sum,
+    processRatio: 0.68,
+    barriers: items,
+    allBarriers: items,
+    pipelineReasons
+  };
+}
+
+export function getPreviewProjections(period: string, product: string, ro?: string): ProjectionData {
+  const ov = getPreviewOverview(period, product, ro || '');
+  const sum = getFallbackSummary(ov);
+  return {
+    key: `${period}_${product}_${ro || 'ALL'}`,
+    period: period,
+    basePeriod: '2026-09',
+    nextPeriod: '2026-11',
+    scopeType: ro ? 'RO' : 'NASIONAL',
+    scopeId: ro || 'ALL',
+    base_actual_rp: Math.round(sum.achievement_rp * 0.95),
+    current_target_rp: sum.target_rp,
+    current_actual_rp: sum.achievement_rp,
+    current_attainment_pct: sum.attainment_pct,
+    projection_rp: Math.round(sum.target_rp * 1.08),
+    next_projection_rp: Math.round(sum.target_rp * 1.15),
+    driver_text: 'Fokus percepatan closing pipeline HOT Rp 54 M, aktivasi SF merah melalui pendampingan intensif Korea, dan ekspansi penetrasi Mitraguna pada instansi prioritas.',
+    gap_to_target: Math.max(0, sum.target_rp - sum.achievement_rp)
+  };
+}
+
+export function getPreviewDevelopmentPlans(period: string, product: string, ro?: string): DevelopmentPlan[] {
+  return [
+    {
+      plan_id: 'PLAN-01',
+      period_id: period,
+      area_id: 'AREA004',
+      area_name: 'AREA SURABAYA',
+      focus_title: 'Aktivasi SF Merah & Follow-up HOT',
+      action_plan: 'Fasilitasi berkas taksasi tertahan dan asistensi intensif Koordinator Area (Korea).',
+      how_to: 'Shadowing harian pada 5 SF dengan pipeline terbesar dan jemput bola berkas pemohon.',
+      pic: 'Koordinator Area Surabaya',
+      deadline: '2026-11-30',
+      horizon_30_day: 'Selesaikan 80% berkas taksasi tertahan',
+      horizon_60_day: 'Tingkatkan produktivitas SF merah ke zona aman',
+      horizon_90_day: 'Pencapaian target > 100% konsisten',
+      target_result: 'Pencairan tambahan Rp 12 M',
+      include_to_presentation: 'YA',
+      approval_status: 'DISETUJUI',
+      focus_order: 1
+    },
+    {
+      plan_id: 'PLAN-02',
+      period_id: period,
+      area_id: 'AREA001',
+      area_name: 'AREA BALIKPAPAN',
+      focus_title: 'Optimalisasi Penetrasi Cabang Binaan',
+      action_plan: 'Penempatan SF dedicated pada cabang dengan volume prapen pensiun tertinggi.',
+      how_to: 'Koordinasi dengan pimpinan cabang BSI setempat untuk pembagian zonasi.',
+      pic: 'Koordinator Area Balikpapan',
+      deadline: '2026-11-25',
+      horizon_30_day: 'Penetapan alokasi SF di tiap cabang binaan',
+      horizon_60_day: 'Aktivasi prapen ASN & TNI-Polri',
+      horizon_90_day: 'Pertumbuhan NOA minimal 35%',
+      target_result: 'Pencairan tambahan Rp 8,5 M',
+      include_to_presentation: 'YA',
+      approval_status: 'DISETUJUI',
+      focus_order: 2
+    },
+    {
+      plan_id: 'PLAN-03',
+      period_id: period,
+      area_id: 'AREA011',
+      area_name: 'AREA BANDUNG',
+      focus_title: 'Akselerasi Pembiayaan Mitraguna Instansi',
+      action_plan: 'Sosialisasi program kemitraan payroll dan ekspansi pembiayaan konsumtif BSI.',
+      how_to: 'Presentasi langsung ke instansi Pemda dan RSUD binaan.',
+      pic: 'Region Head Jawa Barat',
+      deadline: '2026-12-05',
+      horizon_30_day: 'Closing 3 instansi dengan potensi Rp 15 M',
+      horizon_60_day: 'Realisasi pencairan bertahap 150 NOA',
+      horizon_90_day: 'Ekspansi ke instansi satker sekunder',
+      target_result: 'Pencairan tambahan Rp 14 M',
+      include_to_presentation: 'YA',
+      approval_status: 'DISETUJUI',
+      focus_order: 3
+    }
+  ];
+}

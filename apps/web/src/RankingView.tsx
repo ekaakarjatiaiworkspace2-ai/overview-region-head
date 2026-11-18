@@ -103,7 +103,7 @@ export function RankingView({
                 </tr>
               </thead>
               <tbody>
-                {data.roRankings.map(r => (
+                {(data.roRankings || []).map(r => (
                   <tr key={r.ro_name}>
                     <td>
                       <span className={`rank-badge ${r.rank <= 3 ? 'top-rank' : ''}`}>#{r.rank}</span>
@@ -136,7 +136,7 @@ export function RankingView({
                 </tr>
               </thead>
               <tbody>
-                {data.rhRankings.map(r => (
+                {(data.rhRankings || []).map(r => (
                   <tr key={r.rh_key}>
                     <td>
                       <span className={`rank-badge ${r.rank <= 3 ? 'top-rank' : ''}`}>#{r.rank}</span>
@@ -232,7 +232,7 @@ export function RankingView({
                 </tr>
               </thead>
               <tbody>
-                {data.areaRankings.map(a => (
+                {(data.areaRankings || []).map(a => (
                   <tr
                     key={a.area_id}
                     onClick={() => onSelectArea?.(a.area_id)}
@@ -276,7 +276,7 @@ export function RankingView({
                 </tr>
               </thead>
               <tbody>
-                {data.branchRankings.map(b => (
+                {(data.branchRankings || []).map(b => (
                   <tr key={b.branch_name + b.rank}>
                     <td>
                       <span className={`rank-badge ${b.rank <= 3 ? 'top-rank' : ''}`}>#{b.rank}</span>
@@ -309,7 +309,7 @@ export function RankingView({
                 </tr>
               </thead>
               <tbody>
-                {data.sfRankings.map(sf => (
+                {(data.sfRankings || []).map(sf => (
                   <tr key={sf.sf_name + sf.rank}>
                     <td>
                       <span className={`rank-badge ${sf.rank <= 3 ? 'top-rank' : ''}`}>#{sf.rank}</span>
