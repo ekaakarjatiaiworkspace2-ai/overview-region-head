@@ -4,7 +4,7 @@ import {
   Activity, ArrowRight, BarChart3, Building2, CheckCircle2, ChevronDown, Clock3,
   Database, FileText, LockKeyhole, LogOut, Presentation, RefreshCw, ShieldCheck,
   Target, Users, Workflow, BookOpen, TrendingUp, Trophy, X, Filter, MapPin, Briefcase,
-  Menu
+  Menu, Sparkles
 } from 'lucide-react';
 import {
   authConfigured, supabase, request,
@@ -27,6 +27,8 @@ import {BarriersView} from './BarriersView';
 import {DevelopmentView} from './DevelopmentView';
 import {RankingView} from './RankingView';
 import {SyncRunsView} from './SyncRunsView';
+import {JatiMascot} from './components/JatiMascot';
+import {JatiCopilotView} from './components/JatiCopilotView';
 import {ErrorBoundary} from './ErrorBoundary';
 
 const previewEnabled = import.meta.env.DEV || import.meta.env.VITE_ENABLE_PREVIEW !== 'false';
@@ -123,6 +125,7 @@ export type DashboardPage =
   | 'ranking'
   | 'story'
   | 'presentation'
+  | 'copilot'
   | 'sync';
 
 function Navigation({
@@ -247,6 +250,18 @@ function Navigation({
           >
             <Presentation size={18} /> Presentasi 16:9
             {activePage === 'presentation' && <span className="nav-active-mark" />}
+          </button>
+        </nav>
+
+        <div className="side-group-title second">ASISTEN CERDAS AI</div>
+        <nav aria-label="Navigasi Asisten AI">
+          <button
+            type="button"
+            onClick={() => handleNav('copilot')}
+            className={`nav-link nav-button ${activePage === 'copilot' ? 'active' : ''}`}
+          >
+            <Sparkles size={18} /> Meet Jati! (Copilot)
+            {activePage === 'copilot' && <span className="nav-active-mark" />}
           </button>
         </nav>
 
@@ -886,7 +901,8 @@ function Dashboard({session, onLogout, preview = false}: {session: Session | nul
                  activePage === 'development' ? 'Pilar 5: Langkah Pengembangan' :
                  activePage === 'ranking' ? 'Peringkat Wilayah Nasional' :
                  activePage === 'story' ? 'Story Editor Narasi PPT' :
-                 activePage === 'presentation' ? 'Presentasi 16:9 Eksekutif' : 'Platform & Log Sinkronisasi'}
+                 activePage === 'presentation' ? 'Presentasi 16:9 Eksekutif' :
+                 activePage === 'copilot' ? 'Meet Jati! - Asisten AI Copilot' : 'Platform & Log Sinkronisasi'}
               </strong>
             </div>
           </div>
@@ -1179,6 +1195,10 @@ function Dashboard({session, onLogout, preview = false}: {session: Session | nul
                 />
               )}
 
+              {activePage === 'copilot' && (
+                <JatiCopilotView onNavigateToStory={() => setActivePage('story')} />
+              )}
+
               {/* AREA DRILL-DOWN MODAL */}
               {selectedAreaId && (
                 <div className="modal-backdrop" onClick={() => setSelectedAreaId(null)}>
@@ -1404,6 +1424,26 @@ function Dashboard({session, onLogout, preview = false}: {session: Session | nul
           <span>Menu</span>
         </button>
       </nav>
+
+      {/* FLOATING JATI COPILOT WIDGET */}
+      {activePage !== 'copilot' && (
+        <button
+          type="button"
+          className="jati-floating-trigger"
+          onClick={() => setActivePage('copilot')}
+          title="Buka Meet Jati! Asisten AI Copilot"
+        >
+          <div style={{ width: 44, height: 44, position: 'relative' }}>
+            <JatiMascot pose="hover" size={44} interactive={false} autoFloat={true} />
+          </div>
+          <div className="jati-trigger-label">
+            <span className="jati-trigger-title">
+              <Sparkles size={13} style={{ color: '#f59e0b' }} /> Tanya Jati
+            </span>
+            <span className="jati-trigger-sub">Copilot BI &amp; Action</span>
+          </div>
+        </button>
+      )}
     </div>
   );
 }
