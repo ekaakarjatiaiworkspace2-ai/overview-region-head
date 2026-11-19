@@ -934,11 +934,35 @@ td small {
     transform: translateX(0);
     box-shadow: 6px 0 28px rgba(0, 0, 0, 0.45);
   }
-  .sidebar nav, .side-group-title, .sidebar-bottom {
-    display: flex;
+  .sidebar nav {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 3px;
+    width: 100%;
+  }
+  .sidebar nav .nav-link {
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 11px !important;
+    padding: 10px 12px !important;
+    min-height: 42px;
+    white-space: nowrap;
+    text-align: left;
+    box-sizing: border-box;
   }
   .side-group-title {
-    display: block;
+    display: block !important;
+    width: 100%;
+  }
+  .sidebar-bottom {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 10px;
+    width: 100%;
   }
 
   /* Sidebar Close Button */
