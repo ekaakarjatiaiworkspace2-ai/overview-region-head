@@ -15,9 +15,24 @@ function load(filename,modules={}) {
   new Function('require','module','exports',compiled.outputText)((name)=>{if(name in modules)return modules[name];throw Error(`Unexpected dependency ${name}`)},module,module.exports);
   return module.exports;
 }
-const bsiDataset = JSON.parse(fs.readFileSync(path.join(root, 'data/bsi-dataset.json'), 'utf8'));
-bsiDataset.default = bsiDataset;
-const preview=load('preview.ts', {'./data/bsi-dataset.json': bsiDataset});
+function loadJson(rel) {
+  try {
+    const d = JSON.parse(fs.readFileSync(path.join(root, rel), 'utf8'));
+    d.default = d;
+    return d;
+  } catch {
+    return {default: []};
+  }
+}
+const bsiDataset = loadJson('data/bsi-dataset.json');
+const preview=load('preview.ts', {
+  './data/bsi-dataset.json': bsiDataset,
+  './data/rankKorea.json': loadJson('data/rankKorea.json'),
+  './data/potensiBranch.json': loadJson('data/potensiBranch.json'),
+  './data/history2026.json': loadJson('data/history2026.json'),
+  './data/alerts.json': loadJson('data/alerts.json'),
+  './data/pipelineReason.json': loadJson('data/pipelineReason.json')
+});
 const model=load('presentation-model.ts',{'./preview':preview});
 
 test('model slide ids and order preserve relevant V5.4 names',()=>{

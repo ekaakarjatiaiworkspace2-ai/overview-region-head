@@ -1,0 +1,452 @@
+[
+  {
+    "period_id": "2026-08",
+    "filter_ro": "RO KALIMANTAN",
+    "source_ro": "RO KALIMANTAN",
+    "rh_user_key": "RH_RH0012",
+    "rh_name": "Marezza",
+    "area_id": "AREA001",
+    "area_name": "AREA BALIKPAPAN",
+    "scope_status": "CURRENT_ACCESS"
+  },
+  {
+    "period_id": "2026-08",
+    "filter_ro": "RO ACEH",
+    "source_ro": "RO ACEH",
+    "rh_user_key": "RH_RH0001",
+    "rh_name": "Jamaluddin",
+    "area_id": "AREA002",
+    "area_name": "AREA BANDA ACEH",
+    "scope_status": "CURRENT_ACCESS"
+  },
+  {
+    "period_id": "2026-08",
+    "filter_ro": "RO PALEMBANG",
+    "source_ro": "RO PALEMBANG",
+    "rh_user_key": "RH_RH0003",
+    "rh_name": "M. Villar",
+    "area_id": "AREA003",
+    "area_name": "AREA BANDAR LAMPUNG",
+    "scope_status": "CURRENT_ACCESS"
+  },
+  {
+    "period_id": "2026-08",
+    "filter_ro": "RO BANDUNG",
+    "source_ro": "RO BANDUNG",
+    "rh_user_key": "RH_RH0007",
+    "rh_name": "Herpa",
+    "area_id": "AREA004",
+    "area_name": "AREA BANDUNG KOTA",
+    "scope_status": "CURRENT_ACCESS"
+  },
+  {
+    "period_id": "2026-08",
+    "filter_ro": "RO BANDUNG",
+    "source_ro": "RO BANDUNG",
+    "rh_user_key": "RH_RH0007",
+    "rh_name": "Herpa",
+    "area_id": "AREA005",
+    "area_name": "AREA BANDUNG RAYA",
+    "scope_status": "CURRENT_ACCESS"
+  },
+  {
+    "period_id": "2026-08",
+    "filter_ro": "RO KALIMANTAN",
+    "source_ro": "RO KALIMANTAN",
+    "rh_user_key": "RH_RH0012",
+    "rh_name": "Marezza",
+    "area_id": "AREA006",
+    "area_name": "AREA BANJARMASIN",
+    "scope_status": "CURRENT_ACCESS"
+  },
+  {
+    "period_id": "2026-08",
+    "filter_ro": "RO JAKARTA 1",
+    "source_ro": "RO JAKARTA 1",
+    "rh_user_key": "RH_RH0004",
+    "rh_name": "Gani W",
+    "area_id": "AREA007",
+    "area_name": "AREA BANTEN",
+    "scope_status": "CURRENT_ACCESS"
+  },
+  {
+    "period_id": "2026-08",
+    "filter_ro": "RO MEDAN",
+    "source_ro": "RO MEDAN",
+    "rh_user_key": "RH_RH0002",
+    "rh_name": "Dian P",
+    "area_id": "AREA008",
+    "area_name": "AREA BATAM",
+    "scope_status": "CURRENT_ACCESS"
+  },
+  {
+    "period_id": "2026-08",
+    "filter_ro": "RO JAKARTA 3",
+    "source_ro": "RO JAKARTA 3",
+    "rh_user_key": "RH_RH0006",
+    "rh_name": "Nur Achlis A",
+    "area_id": "AREA009",
+    "area_name": "AREA BEKASI",
+    "scope_status": "CURRENT_ACCESS"
+  },
+  {
+    "period_id": "2026-08",
+    "filter_ro": "RO PALEMBANG",
+    "source_ro": "RO PALEMBANG",
+    "rh_user_key": "RH_RH0003",
+    "rh_name": "M. Villar",
+    "area_id": "AREA010",
+    "area_name": "AREA BENGKULU",
+    "scope_status": "CURRENT_ACCESS"
+  },
+  {
+    "period_id": "2026-08",
+    "filter_ro": "RO JAKARTA 2",
+    "source_ro": "RO JAKARTA 2",
+    "rh_user_key": "RH_RH0005",
+    "rh_name": "Budhi D",
+    "area_id": "AREA011",
+    "area_name": "AREA BOGOR",
+    "scope_status": "CURRENT_ACCESS"
+  },
+  {
+    "period_id": "2026-08",
+    "filter_ro": "RO BANDUNG",
+    "source_ro": "RO BANDUNG",
+    "rh_user_key": "RH_RH0007",
+    "rh_name": "Herpa",
+    "area_id": "AREA012",
+    "area_name": "AREA CIREBON",
+    "scope_status": "CURRENT_ACCESS"
+  },
+  {
+    "period_id": "2026-08",
+    "filter_ro": "RO SURABAYA 1",
+    "source_ro": "RO SURABAYA",
+    "rh_user_key": "RH_RH0020",
+    "rh_name": "Ayu Kusnandini",
+    "area_id": "AREA013",
+    "area_name": "AREA DENPASAR",
+    "scope_status": "CURRENT_ACCESS"
+  },
+  {
+    "period_id": "2026-08",
+    "filter_ro": "RO JAKARTA 2",
+    "source_ro": "RO JAKARTA 2",
+    "rh_user_key": "RH_RH0005",
+    "rh_name": "Budhi D",
+    "area_id": "AREA014",
+    "area_name": "AREA DEPOK",
+    "scope_status": "CURRENT_ACCESS"
+  },
+  {
+    "period_id": "2026-08",
+    "filter_ro": "RO JAKARTA 1",
+    "source_ro": "RO JAKARTA 1",
+    "rh_user_key": "RH_RH0004",
+    "rh_name": "Gani W",
+    "area_id": "AREA015",
+    "area_name": "AREA JAKARTA BARAT",
+    "scope_status": "CURRENT_ACCESS"
+  },
+  {
+    "period_id": "2026-08",
+    "filter_ro": "RO JAKARTA 2",
+    "source_ro": "RO JAKARTA 2",
+    "rh_user_key": "RH_RH0005",
+    "rh_name": "Budhi D",
+    "area_id": "AREA016",
+    "area_name": "AREA JAKARTA FATMAWATI",
+    "scope_status": "CURRENT_ACCESS"
+  },
+  {
+    "period_id": "2026-08",
+    "filter_ro": "RO JAKARTA 3",
+    "source_ro": "RO JAKARTA 3",
+    "rh_user_key": "RH_RH0006",
+    "rh_name": "Nur Achlis A",
+    "area_id": "AREA017",
+    "area_name": "AREA JAKARTA KELAPA GADING",
+    "scope_status": "CURRENT_ACCESS"
+  },
+  {
+    "period_id": "2026-08",
+    "filter_ro": "RO JAKARTA 2",
+    "source_ro": "RO JAKARTA 2",
+    "rh_user_key": "RH_RH0005",
+    "rh_name": "Budhi D",
+    "area_id": "AREA018",
+    "area_name": "AREA JAKARTA PONDOK INDAH",
+    "scope_status": "CURRENT_ACCESS"
+  },
+  {
+    "period_id": "2026-08",
+    "filter_ro": "RO JAKARTA 3",
+    "source_ro": "RO JAKARTA 3",
+    "rh_user_key": "RH_RH0006",
+    "rh_name": "Nur Achlis A",
+    "area_id": "AREA019",
+    "area_name": "AREA JAKARTA RAWAMANGUN",
+    "scope_status": "CURRENT_ACCESS"
+  },
+  {
+    "period_id": "2026-08",
+    "filter_ro": "RO JAKARTA 3",
+    "source_ro": "RO JAKARTA 3",
+    "rh_user_key": "RH_RH0006",
+    "rh_name": "Nur Achlis A",
+    "area_id": "AREA020",
+    "area_name": "AREA JAKARTA SAHARJO",
+    "scope_status": "CURRENT_ACCESS"
+  },
+  {
+    "period_id": "2026-08",
+    "filter_ro": "RO JAKARTA 1",
+    "source_ro": "RO JAKARTA 1",
+    "rh_user_key": "RH_RH0004",
+    "rh_name": "Gani W",
+    "area_id": "AREA021",
+    "area_name": "AREA JAKARTA THAMRIN",
+    "scope_status": "CURRENT_ACCESS"
+  },
+  {
+    "period_id": "2026-08",
+    "filter_ro": "RO PALEMBANG",
+    "source_ro": "RO PALEMBANG",
+    "rh_user_key": "RH_RH0003",
+    "rh_name": "M. Villar",
+    "area_id": "AREA022",
+    "area_name": "AREA JAMBI",
+    "scope_status": "CURRENT_ACCESS"
+  },
+  {
+    "period_id": "2026-08",
+    "filter_ro": "RO SURABAYA",
+    "source_ro": "RO SURABAYA",
+    "rh_user_key": "RH_RH0011",
+    "rh_name": "Sugi H",
+    "area_id": "AREA023",
+    "area_name": "AREA JEMBER",
+    "scope_status": "CURRENT_ACCESS"
+  },
+  {
+    "period_id": "2026-08",
+    "filter_ro": "RO SURABAYA",
+    "source_ro": "RO SURABAYA",
+    "rh_user_key": "RH_RH0021",
+    "rh_name": "M. Noor",
+    "area_id": "AREA024",
+    "area_name": "AREA KEDIRI",
+    "scope_status": "CURRENT_ACCESS"
+  },
+  {
+    "period_id": "2026-08",
+    "filter_ro": "RO ACEH",
+    "source_ro": "RO ACEH",
+    "rh_user_key": "RH_RH0001",
+    "rh_name": "Jamaluddin",
+    "area_id": "AREA025",
+    "area_name": "AREA LHOKSEUMAWE",
+    "scope_status": "CURRENT_ACCESS"
+  },
+  {
+    "period_id": "2026-08",
+    "filter_ro": "RO MAKASSAR",
+    "source_ro": "RO MAKASSAR",
+    "rh_user_key": "RH_RH0014",
+    "rh_name": "Marji",
+    "area_id": "AREA026",
+    "area_name": "AREA MAKASSAR",
+    "scope_status": "CURRENT_ACCESS"
+  },
+  {
+    "period_id": "2026-08",
+    "filter_ro": "RO SURABAYA",
+    "source_ro": "RO SURABAYA",
+    "rh_user_key": "RH_RH0021",
+    "rh_name": "M. Noor",
+    "area_id": "AREA027",
+    "area_name": "AREA MALANG",
+    "scope_status": "CURRENT_ACCESS"
+  },
+  {
+    "period_id": "2026-08",
+    "filter_ro": "RO MAKASSAR",
+    "source_ro": "RO MAKASSAR",
+    "rh_user_key": "RH_RH0015",
+    "rh_name": "Awal",
+    "area_id": "AREA028",
+    "area_name": "AREA MANADO",
+    "scope_status": "CURRENT_ACCESS"
+  },
+  {
+    "period_id": "2026-08",
+    "filter_ro": "RO MEDAN",
+    "source_ro": "RO MEDAN",
+    "rh_user_key": "RH_RH0002",
+    "rh_name": "Dian P",
+    "area_id": "AREA029",
+    "area_name": "AREA MEDAN KOTA",
+    "scope_status": "CURRENT_ACCESS"
+  },
+  {
+    "period_id": "2026-08",
+    "filter_ro": "RO MEDAN",
+    "source_ro": "RO MEDAN",
+    "rh_user_key": "RH_RH0002",
+    "rh_name": "Dian P",
+    "area_id": "AREA030",
+    "area_name": "AREA MEDAN RAYA",
+    "scope_status": "CURRENT_ACCESS"
+  },
+  {
+    "period_id": "2026-08",
+    "filter_ro": "RO ACEH",
+    "source_ro": "RO ACEH",
+    "rh_user_key": "RH_RH0001",
+    "rh_name": "Jamaluddin",
+    "area_id": "AREA031",
+    "area_name": "AREA MEULABOH",
+    "scope_status": "CURRENT_ACCESS"
+  },
+  {
+    "period_id": "2026-08",
+    "filter_ro": "RO PALEMBANG",
+    "source_ro": "RO PALEMBANG",
+    "rh_user_key": "RH_RH0002",
+    "rh_name": "Dian P",
+    "area_id": "AREA032",
+    "area_name": "AREA PADANG",
+    "scope_status": "CURRENT_ACCESS"
+  },
+  {
+    "period_id": "2026-08",
+    "filter_ro": "RO PALEMBANG",
+    "source_ro": "RO PALEMBANG",
+    "rh_user_key": "RH_RH0003",
+    "rh_name": "M. Villar",
+    "area_id": "AREA033",
+    "area_name": "AREA PALEMBANG",
+    "scope_status": "CURRENT_ACCESS"
+  },
+  {
+    "period_id": "2026-08",
+    "filter_ro": "RO MAKASSAR",
+    "source_ro": "RO MAKASSAR",
+    "rh_user_key": "RH_RH0017",
+    "rh_name": "Awaluddin",
+    "area_id": "AREA034",
+    "area_name": "AREA PALU",
+    "scope_status": "CURRENT_ACCESS"
+  },
+  {
+    "period_id": "2026-08",
+    "filter_ro": "RO SEMARANG",
+    "source_ro": "RO SEMARANG",
+    "rh_user_key": "RH_RH0018",
+    "rh_name": "Nur Noviyanti",
+    "area_id": "AREA035",
+    "area_name": "AREA PEKALONGAN",
+    "scope_status": "CURRENT_ACCESS"
+  },
+  {
+    "period_id": "2026-08",
+    "filter_ro": "RO MEDAN",
+    "source_ro": "RO MEDAN",
+    "rh_user_key": "RH_RH0002",
+    "rh_name": "Dian P",
+    "area_id": "AREA036",
+    "area_name": "AREA PEKANBARU",
+    "scope_status": "CURRENT_ACCESS"
+  },
+  {
+    "period_id": "2026-08",
+    "filter_ro": "RO MEDAN",
+    "source_ro": "RO MEDAN",
+    "rh_user_key": "RH_RH0002",
+    "rh_name": "Dian P",
+    "area_id": "AREA037",
+    "area_name": "AREA PEMATANGSIANTAR",
+    "scope_status": "CURRENT_ACCESS"
+  },
+  {
+    "period_id": "2026-08",
+    "filter_ro": "RO KALIMANTAN",
+    "source_ro": "RO KALIMANTAN",
+    "rh_user_key": "RH_RH0013",
+    "rh_name": "Suharsono",
+    "area_id": "AREA038",
+    "area_name": "AREA PONTIANAK",
+    "scope_status": "CURRENT_ACCESS"
+  },
+  {
+    "period_id": "2026-08",
+    "filter_ro": "RO SEMARANG",
+    "source_ro": "RO SEMARANG",
+    "rh_user_key": "RH_RH0019",
+    "rh_name": "Vera Ariesta Dewi",
+    "area_id": "AREA039",
+    "area_name": "AREA PURWOKERTO",
+    "scope_status": "CURRENT_ACCESS"
+  },
+  {
+    "period_id": "2026-08",
+    "filter_ro": "RO SEMARANG",
+    "source_ro": "RO SEMARANG",
+    "rh_user_key": "RH_RH0018",
+    "rh_name": "Nur Noviyanti",
+    "area_id": "AREA040",
+    "area_name": "AREA SEMARANG KOTA",
+    "scope_status": "CURRENT_ACCESS"
+  },
+  {
+    "period_id": "2026-08",
+    "filter_ro": "RO SEMARANG",
+    "source_ro": "RO SEMARANG",
+    "rh_user_key": "RH_RH0019",
+    "rh_name": "Vera Ariesta Dewi",
+    "area_id": "AREA041",
+    "area_name": "AREA SOLO",
+    "scope_status": "CURRENT_ACCESS"
+  },
+  {
+    "period_id": "2026-08",
+    "filter_ro": "RO SURABAYA",
+    "source_ro": "RO SBN",
+    "rh_user_key": "RH_RH0011",
+    "rh_name": "Sugi H",
+    "area_id": "AREA042",
+    "area_name": "AREA SURABAYA KOTA",
+    "scope_status": "CURRENT_ACCESS"
+  },
+  {
+    "period_id": "2026-08",
+    "filter_ro": "RO SURABAYA",
+    "source_ro": "RO SBN",
+    "rh_user_key": "RH_RH0011",
+    "rh_name": "Sugi H",
+    "area_id": "AREA043",
+    "area_name": "AREA SURABAYA RAYA",
+    "scope_status": "CURRENT_ACCESS"
+  },
+  {
+    "period_id": "2026-08",
+    "filter_ro": "RO JAKARTA 1",
+    "source_ro": "RO JAKARTA 1",
+    "rh_user_key": "RH_RH0004",
+    "rh_name": "Gani W",
+    "area_id": "AREA044",
+    "area_name": "AREA TANGERANG SELATAN",
+    "scope_status": "CURRENT_ACCESS"
+  },
+  {
+    "period_id": "2026-08",
+    "filter_ro": "RO SEMARANG",
+    "source_ro": "RO SEMARANG",
+    "rh_user_key": "RH_RH0019",
+    "rh_name": "Vera Ariesta Dewi",
+    "area_id": "AREA045",
+    "area_name": "AREA YOGYAKARTA",
+    "scope_status": "CURRENT_ACCESS"
+  }
+]

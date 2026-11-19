@@ -1,9 +1,20 @@
 import type {AreaKpi, KoreaRanking, Overview, RankingsData, UserProfile} from './api';
 import bsiRawData from './data/bsi-dataset.json';
+import rankKoreaRaw from './data/rankKorea.json';
+import potensiBranchRaw from './data/potensiBranch.json';
+import history2026Raw from './data/history2026.json';
+import alertsRaw from './data/alerts.json';
+import pipelineReasonRaw from './data/pipelineReason.json';
 
 export const previewPeriods = ['2026-10', '2026-09', '2026-08'];
 export const previewUser: UserProfile = {id:'preview-only', displayName:'Admin EKA', role:'ADMIN'};
 const rawList: any[] = Array.isArray(bsiRawData) ? bsiRawData : ((bsiRawData as any)?.default || []);
+const rawKoreaList: any[] = Array.isArray(rankKoreaRaw) ? rankKoreaRaw : ((rankKoreaRaw as any)?.default || []);
+const rawBranchList: any[] = Array.isArray(potensiBranchRaw) ? potensiBranchRaw : ((potensiBranchRaw as any)?.default || []);
+const rawHistoryList: any[] = Array.isArray(history2026Raw) ? history2026Raw : ((history2026Raw as any)?.default || []);
+const rawAlertsList: any[] = Array.isArray(alertsRaw) ? alertsRaw : ((alertsRaw as any)?.default || []);
+const rawReasonList: any[] = Array.isArray(pipelineReasonRaw) ? pipelineReasonRaw : ((pipelineReasonRaw as any)?.default || []);
+
 export const previewRos = [...new Set(rawList.map((r: any) => r.ro_filter_group || r.ro_source).filter(Boolean) as string[])].sort();
 
 export function getPreviewOverview(period: string, product: string, ro: string): Overview {
@@ -148,36 +159,37 @@ export function getPreviewRankings(period: string, product: string, ro?: string)
     .sort((a, b) => b.attainment_pct - a.attainment_pct)
     .map((r, i) => ({ ...r, rank: i + 1 }));
 
-  // Korea Rankings: terhubung langsung dengan Area & Region Head resmi
-  const topAreasForKoreas = areas.filter(a => a.rh_names).slice(0, 10);
-  const sampleKoreaNames = [
-    'Tarisa Jesika Harmaini', 'Chamari Aksar', 'Astati Saflia', 'Rico Triyadi',
-    'Sri Wulandari', 'M. Abduh', 'Totok Agus Sopiyan', 'Mirda Ayu Citra Daniar',
-    'Mufidatur Rodiana', "Ma'rifatul Azizah"
-  ];
-  const koreaRankings: KoreaRanking[] = topAreasForKoreas.map((a, i) => {
-    const kName = sampleKoreaNames[i % sampleKoreaNames.length];
-    const sf = a.sf_active_total || 12;
-    const target = Math.round((a.target_rp || 5e9) * 0.45);
-    const achieve = Math.round((a.achievement_rp || 4e9) * 0.45);
-    const attain = target > 0 ? achieve / target : 0.85;
-    const rate = a.korea_activity_rate || 0.85;
+  // Korea Rankings: Langsung dari 106 Koordinator Area resmi pada dataset BSI
+  const filteredKoreas = rawKoreaList.filter((k: any) => {
+    if (ro) {
+      const matchedArea = areas.find(a => a.area_id === k.area_id || a.area_name.toUpperCase() === String(k.area_name || '').toUpperCase());
+      if (!matchedArea) return false;
+    }
+    return true;
+  });
+
+  const sourceKoreas = filteredKoreas.length ? filteredKoreas : rawKoreaList;
+  const koreaRankings: KoreaRanking[] = sourceKoreas.map((k: any, i: number) => {
+    const target = k.all_target_rp || k.target_rp || 3.5e9;
+    const achieve = k.all_achievement_rp || k.achievement_rp || 2.8e9;
+    const sf = k.sf_active || 10;
+    const rate = k.korea_activity_rate || 0.8;
     return {
       rank: i + 1,
-      nip_korea: `407${1000 + i}`,
-      nama_korea: kName,
-      area_id: a.area_id,
-      area_name: a.area_name,
-      rh_name: a.rh_names || 'Region Head',
+      nip_korea: String(k.nip_korea || `ASM407${String(i + 1).padStart(4, '0')}`),
+      nama_korea: String(k.nama_korea || `Koordinator Area ${i + 1}`),
+      area_id: String(k.area_id || `AREA${String(i + 1).padStart(3, '0')}`),
+      area_name: String(k.area_name || 'Area'),
+      rh_name: String(k.rh_name || 'Region Head'),
       target_rp: target,
       achievement_rp: achieve,
-      attainment_pct: attain,
+      attainment_pct: k.all_attainment_pct ?? (target > 0 ? achieve / target : 0.8),
       sf_active: sf,
-      sf_green: a.sf_green ?? Math.round(sf * 0.6),
-      sf_grey: a.sf_grey ?? Math.round(sf * 0.25),
-      sf_red: a.sf_red ?? Math.max(0, sf - Math.round(sf * 0.6) - Math.round(sf * 0.25)),
+      sf_green: k.sf_green ?? Math.round(sf * 0.6),
+      sf_grey: k.sf_grey ?? Math.round(sf * 0.25),
+      sf_red: k.sf_red ?? Math.max(0, sf - (k.sf_green || 0) - (k.sf_grey || 0)),
       korea_activity_rate: rate,
-      korea_activity_status: rate >= 0.8 ? 'GREEN' : rate >= 0.6 ? 'GREY' : 'RED'
+      korea_activity_status: (k.korea_activity_status as 'GREEN' | 'GREY' | 'RED') || (rate >= 0.8 ? 'GREEN' : rate >= 0.6 ? 'GREY' : 'RED')
     };
   }).sort((a, b) => b.attainment_pct - a.attainment_pct).map((k, i) => ({ ...k, rank: i + 1 }));
 
@@ -195,12 +207,17 @@ export function getPreviewRankings(period: string, product: string, ro?: string)
     quadrant_name: a.quadrant_name || 'Kondisi kuat'
   })).sort((a, b) => b.attainment_pct - a.attainment_pct).map((a, i) => ({ ...a, rank: i + 1 }));
 
-  // Branch Rankings
-  const branchRankings = [
-    { rank: 1, branch_name: 'KC SURABAYA DARMO', area_name: 'AREA SURABAYA', ro_name: 'RO JAWA TIMUR', target_rp: 8e9, achievement_rp: 12.5e9, attainment_pct: 1.56 },
-    { rank: 2, branch_name: 'KC BANDUNG ASIA AFRIKA', area_name: 'AREA BANDUNG', ro_name: 'RO JAWA BARAT', target_rp: 7.5e9, achievement_rp: 10.8e9, attainment_pct: 1.44 },
-    { rank: 3, branch_name: 'KC MAKASSAR RATULANGI', area_name: 'AREA MAKASSAR', ro_name: 'RO SULAWESI', target_rp: 6e9, achievement_rp: 8.2e9, attainment_pct: 1.36 },
-  ];
+  // Branch Rankings: Dari 514 Cabang Resmi BSI
+  const filteredBranches = rawBranchList.filter((b: any) => !ro || b.ro_source === ro);
+  const branchRankings = (filteredBranches.length ? filteredBranches : rawBranchList).slice(0, 10).map((b: any, i: number) => ({
+    rank: i + 1,
+    branch_name: String(b.branch_name || 'Cabang KC'),
+    area_name: String(b.area_name || 'Area'),
+    ro_name: String(b.ro_source || 'RO'),
+    target_rp: Math.round((b.total_open_rp || 10e9) * 0.35),
+    achievement_rp: Math.round((b.total_open_rp || 10e9) * 0.42),
+    attainment_pct: 1.2
+  }));
 
   // SF Rankings
   const sfRankings = [
@@ -308,12 +325,18 @@ export function getPreviewPotential(period: string, product: string, ro?: string
   const slaTot = sumKey('sla_open_rp');
   const prapTot = sumKey('prap_open_rp');
 
-  const topBranches = [
-    { branch_code: 'KC001', branch_name: 'KC SURABAYA DARMO', area_name: 'AREA SURABAYA', sf_total: 18, coverage_status: 'OPTIMAL', reguler_open_rp: 5.4e9, sla_open_rp: 3.2e9, prap_open_rp: 2.1e9, total_open_rp: 10.7e9 },
-    { branch_code: 'KC002', branch_name: 'KC BANDUNG ASIA AFRIKA', area_name: 'AREA BANDUNG', sf_total: 16, coverage_status: 'OPTIMAL', reguler_open_rp: 4.8e9, sla_open_rp: 2.9e9, prap_open_rp: 1.9e9, total_open_rp: 9.6e9 },
-    { branch_code: 'KC003', branch_name: 'KC MAKASSAR RATULANGI', area_name: 'AREA MAKASSAR', sf_total: 14, coverage_status: 'CUKUP', reguler_open_rp: 4.2e9, sla_open_rp: 2.5e9, prap_open_rp: 1.6e9, total_open_rp: 8.3e9 },
-    { branch_code: 'KC004', branch_name: 'KC MALANG KAWI', area_name: 'AREA MALANG', sf_total: 12, coverage_status: 'OPTIMAL', reguler_open_rp: 3.8e9, sla_open_rp: 2.2e9, prap_open_rp: 1.5e9, total_open_rp: 7.5e9 },
-  ];
+  const filteredBranches = rawBranchList.filter((b: any) => !ro || b.ro_source === ro);
+  const topBranches = (filteredBranches.length ? filteredBranches : rawBranchList).slice(0, 8).map((b: any) => ({
+    branch_code: String(b.branch_code || 'KC000'),
+    branch_name: String(b.branch_name || 'Cabang KC'),
+    area_name: String(b.area_name || 'Area'),
+    sf_total: b.sf_total || 4,
+    coverage_status: String(b.coverage_status || 'COVERED'),
+    reguler_open_rp: b.sla_open_rp ? Math.round(b.sla_open_rp * 0.9) : 4.5e9,
+    sla_open_rp: b.sla_open_rp || 3e9,
+    prap_open_rp: b.prap_open_rp || 2e9,
+    total_open_rp: b.total_open_rp || 8e9
+  }));
 
   return {
     summary: {
@@ -376,25 +399,51 @@ export function getPreviewCapacity(period: string, product: string, ro?: string)
 export function getPreviewBarriers(period: string, product: string, ro?: string): BarriersData {
   const ov = getPreviewOverview(period, product, ro || '');
   const sum = getFallbackSummary(ov);
-  const items = [
-    { code: 'B01', title: 'Aktivasi Sales Force Merah Masih Tertahan', severity: 4, evidence: 'Terdapat 58 Sales Force (14%) dengan pencairan di bawah standar minimal Rp 150 jt/bulan.', meaning: 'Perlu program pendampingan intensif dan evaluasi mingguan oleh Koordinator Area.' },
-    { code: 'B02', title: 'Pipeline Tertahan di Tahap Dokumen & Taksasi', severity: 3, evidence: 'Sebesar Rp 54 M berkas taksasi tertahan > 14 hari di cabang pembiayaan.', meaning: 'Diperlukan koordinasi percepatan jadwal taksasi dan jemput bola berkas pemohon.' },
-    { code: 'B03', title: 'Rasio Cakupan Cabang Belum Merata', severity: 3, evidence: '28% cabang binaan memiliki rasio coverage di bawah 65%.', meaning: 'Penugasan dan rotasi Sales Force aktif ke cabang-cabang berpotensi tinggi.' },
-    { code: 'B04', title: 'Aktivitas Visit Koordinator Area (Korea)', severity: 2, evidence: 'Rata-rata aktivitas visit Korea baru mencapai 70% dari target minimal 85%.', meaning: 'Pengawasan logbook harian Korea dan checklist supervisi lapangan.' }
-  ];
 
-  const pipelineReasons = [
-    { category: 'DOKUMEN', reason: 'Persyaratan berkas pemohon belum lengkap', count: 48, amount_rp: 24.5e9, followup: 'Asistensi jemput bola dokumen oleh SF pendamping' },
-    { category: 'TAKSASI', reason: 'Menunggu jadwal taksasi jaminan appraisal', count: 32, amount_rp: 18.2e9, followup: 'Eskalasi jadwal prioritas ke Pincab BSI setempat' },
-    { category: 'VERIFIKASI', reason: 'Proses konfirmasi instansi/bendahara gaji mitra', count: 21, amount_rp: 11.3e9, followup: 'Kunjungan bersama Korea ke instansi mitra BUMN/ASN' },
-  ];
+  const matchedAlerts = rawAlertsList.filter((a: any) => {
+    if (ro) {
+      const match = ov.areas.find(ar => ar.area_id === a.area_id || ar.area_name.toUpperCase() === String(a.area_name || '').toUpperCase());
+      if (!match) return false;
+    }
+    return true;
+  });
+
+  const alertsSource = matchedAlerts.length ? matchedAlerts : rawAlertsList;
+  const items = alertsSource.slice(0, 5).map((a: any, i: number) => ({
+    code: `ALT-${String(i + 1).padStart(2, '0')}`,
+    title: String(a.title || 'Peringatan Operasional Wilayah'),
+    severity: a.level === 'PERLU_TINDAKAN' ? 4 : 3,
+    evidence: String(a.evidence || 'Perlu evaluasi berkala pada unit area terkait.'),
+    meaning: a.level === 'PERLU_TINDAKAN' ? 'Tindakan mitigasi segera diperlukan dalam 7 hari kalender.' : 'Kondisi memerlukan supervisi berkelanjutan oleh Region Head.'
+  }));
+
+  const matchedReasons = rawReasonList.filter((r: any) => {
+    if (ro) {
+      const match = ov.areas.find(ar => ar.area_id === r.area_id || ar.area_name.toUpperCase() === String(r.area_name || '').toUpperCase());
+      if (!match) return false;
+    }
+    return true;
+  });
+
+  const reasonsSource = matchedReasons.length ? matchedReasons : rawReasonList;
+  const pipelineReasons = reasonsSource.slice(0, 5).map((r: any) => ({
+    category: String(r.reason_category || 'DOKUMEN').toUpperCase(),
+    reason: String(r.reason_raw || 'Persyaratan berkas dalam proses'),
+    count: Number(r.business_case_count || r.record_count || 10),
+    amount_rp: Number(r.plafond_total_rp || 5e9),
+    followup: String(r.system_followup_hint || 'Asistensi jemput bola dokumen oleh tim sales')
+  }));
 
   return {
     summary: sum,
     processRatio: 0.68,
-    barriers: items,
+    barriers: items.length ? items : [
+      { code: 'B01', title: 'Aktivasi Sales Force Merah Masih Tertahan', severity: 4, evidence: 'Terdapat Sales Force dengan pencairan di bawah standar.', meaning: 'Perlu program pendampingan intensif oleh Koordinator Area.' }
+    ],
     allBarriers: items,
-    pipelineReasons
+    pipelineReasons: pipelineReasons.length ? pipelineReasons : [
+      { category: 'DOKUMEN', reason: 'Persyaratan berkas pemohon belum lengkap', count: 48, amount_rp: 24.5e9, followup: 'Asistensi jemput bola dokumen oleh tim sales' }
+    ]
   };
 }
 
