@@ -3,7 +3,8 @@ import {type Session} from '@supabase/supabase-js';
 import {
   Activity, ArrowRight, BarChart3, Building2, CheckCircle2, ChevronDown, Clock3,
   Database, FileText, LockKeyhole, LogOut, Presentation, RefreshCw, ShieldCheck,
-  Target, Users, Workflow, BookOpen, TrendingUp, Trophy, X, Filter, MapPin, Briefcase
+  Target, Users, Workflow, BookOpen, TrendingUp, Trophy, X, Filter, MapPin, Briefcase,
+  Menu
 } from 'lucide-react';
 import {
   authConfigured, supabase, request,
@@ -128,123 +129,151 @@ function Navigation({
   user,
   onLogout,
   activePage,
-  onNavigate
+  onNavigate,
+  isOpen = false,
+  onClose
 }: {
   user: UserProfile;
   onLogout: () => void;
   activePage: DashboardPage;
   onNavigate: (next: DashboardPage) => void;
+  isOpen?: boolean;
+  onClose?: () => void;
 }) {
+  const handleNav = (next: DashboardPage) => {
+    onNavigate(next);
+    if (onClose) onClose();
+  };
+
   return (
-    <aside className="sidebar">
-      <div className="sidebar-logo">
-        <div className="brand-square">E</div>
-        <div><b>EKA</b><span>BUSINESS OVERVIEW</span></div>
-      </div>
-
-      <div className="side-group-title">5 PILAR UTAMA BISNIS</div>
-      <nav aria-label="Navigasi 5 Pilar Bisnis">
-        <button
-          type="button"
-          onClick={() => onNavigate('business')}
-          className={`nav-link nav-button ${activePage === 'business' ? 'active' : ''}`}
-        >
-          <BarChart3 size={18} /> Pilar 1: Kinerja Bisnis
-          {activePage === 'business' && <span className="nav-active-mark" />}
-        </button>
-        <button
-          type="button"
-          onClick={() => onNavigate('history')}
-          className={`nav-link nav-button ${activePage === 'history' ? 'active' : ''}`}
-        >
-          <TrendingUp size={18} /> Jejak Kinerja 2026
-          {activePage === 'history' && <span className="nav-active-mark" />}
-        </button>
-        <button
-          type="button"
-          onClick={() => onNavigate('potential')}
-          className={`nav-link nav-button ${activePage === 'potential' ? 'active' : ''}`}
-        >
-          <Target size={18} /> Pilar 2: Potensi Bisnis
-          {activePage === 'potential' && <span className="nav-active-mark" />}
-        </button>
-        <button
-          type="button"
-          onClick={() => onNavigate('capacity')}
-          className={`nav-link nav-button ${activePage === 'capacity' ? 'active' : ''}`}
-        >
-          <Users size={18} /> Pilar 3: Kapasitas Tim
-          {activePage === 'capacity' && <span className="nav-active-mark" />}
-        </button>
-        <button
-          type="button"
-          onClick={() => onNavigate('barriers')}
-          className={`nav-link nav-button ${activePage === 'barriers' ? 'active' : ''}`}
-        >
-          <Activity size={18} /> Pilar 4: Hambatan
-          {activePage === 'barriers' && <span className="nav-active-mark" />}
-        </button>
-        <button
-          type="button"
-          onClick={() => onNavigate('development')}
-          className={`nav-link nav-button ${activePage === 'development' ? 'active' : ''}`}
-        >
-          <Workflow size={18} /> Pilar 5: Pengembangan
-          {activePage === 'development' && <span className="nav-active-mark" />}
-        </button>
-      </nav>
-
-      <div className="side-group-title second">PERINGKAT & PRESENTASI</div>
-      <nav aria-label="Navigasi Peringkat & Presentasi">
-        <button
-          type="button"
-          onClick={() => onNavigate('ranking')}
-          className={`nav-link nav-button ${activePage === 'ranking' ? 'active' : ''}`}
-        >
-          <Trophy size={18} /> Peringkat Wilayah
-          {activePage === 'ranking' && <span className="nav-active-mark" />}
-        </button>
-        <button
-          type="button"
-          onClick={() => onNavigate('story')}
-          className={`nav-link nav-button ${activePage === 'story' ? 'active' : ''}`}
-        >
-          <BookOpen size={18} /> Story Editor PPT
-          {activePage === 'story' && <span className="nav-active-mark" />}
-        </button>
-        <button
-          type="button"
-          onClick={() => onNavigate('presentation')}
-          className={`nav-link nav-button ${activePage === 'presentation' ? 'active' : ''}`}
-        >
-          <Presentation size={18} /> Presentasi 16:9
-          {activePage === 'presentation' && <span className="nav-active-mark" />}
-        </button>
-      </nav>
-
-      <div className="side-group-title second">PLATFORM & AUDIT</div>
-      <nav aria-label="Navigasi Platform">
-        <button
-          type="button"
-          onClick={() => onNavigate('sync')}
-          className={`nav-link nav-button ${activePage === 'sync' ? 'active' : ''}`}
-        >
-          <Database size={18} /> Data & Sinkronisasi
-          {activePage === 'sync' && <span className="nav-active-mark" />}
-        </button>
-      </nav>
-
-      <div className="sidebar-bottom">
-        <div className="user-dot">{user.displayName.slice(0, 1).toUpperCase()}</div>
-        <div className="user-meta">
-          <strong>{user.displayName}</strong>
-          <small>{user.role}</small>
+    <>
+      {isOpen && (
+        <div
+          className="sidebar-backdrop"
+          onClick={onClose}
+          aria-hidden="true"
+        />
+      )}
+      <aside className={`sidebar ${isOpen ? 'mobile-open' : ''}`}>
+        <div className="sidebar-logo">
+          <div className="brand-square">E</div>
+          <div><b>EKA</b><span>BUSINESS OVERVIEW</span></div>
+          {onClose && (
+            <button
+              type="button"
+              className="sidebar-close-btn"
+              onClick={onClose}
+              aria-label="Tutup Menu"
+            >
+              <X size={20} />
+            </button>
+          )}
         </div>
-        <button title="Keluar" onClick={onLogout} className="icon-btn side-logout">
-          <LogOut size={18} />
-        </button>
-      </div>
-    </aside>
+
+        <div className="side-group-title">5 PILAR UTAMA BISNIS</div>
+        <nav aria-label="Navigasi 5 Pilar Bisnis">
+          <button
+            type="button"
+            onClick={() => handleNav('business')}
+            className={`nav-link nav-button ${activePage === 'business' ? 'active' : ''}`}
+          >
+            <BarChart3 size={18} /> Pilar 1: Kinerja Bisnis
+            {activePage === 'business' && <span className="nav-active-mark" />}
+          </button>
+          <button
+            type="button"
+            onClick={() => handleNav('history')}
+            className={`nav-link nav-button ${activePage === 'history' ? 'active' : ''}`}
+          >
+            <TrendingUp size={18} /> Jejak Kinerja 2026
+            {activePage === 'history' && <span className="nav-active-mark" />}
+          </button>
+          <button
+            type="button"
+            onClick={() => handleNav('potential')}
+            className={`nav-link nav-button ${activePage === 'potential' ? 'active' : ''}`}
+          >
+            <Target size={18} /> Pilar 2: Potensi Bisnis
+            {activePage === 'potential' && <span className="nav-active-mark" />}
+          </button>
+          <button
+            type="button"
+            onClick={() => handleNav('capacity')}
+            className={`nav-link nav-button ${activePage === 'capacity' ? 'active' : ''}`}
+          >
+            <Users size={18} /> Pilar 3: Kapasitas Tim
+            {activePage === 'capacity' && <span className="nav-active-mark" />}
+          </button>
+          <button
+            type="button"
+            onClick={() => handleNav('barriers')}
+            className={`nav-link nav-button ${activePage === 'barriers' ? 'active' : ''}`}
+          >
+            <Activity size={18} /> Pilar 4: Hambatan
+            {activePage === 'barriers' && <span className="nav-active-mark" />}
+          </button>
+          <button
+            type="button"
+            onClick={() => handleNav('development')}
+            className={`nav-link nav-button ${activePage === 'development' ? 'active' : ''}`}
+          >
+            <Workflow size={18} /> Pilar 5: Pengembangan
+            {activePage === 'development' && <span className="nav-active-mark" />}
+          </button>
+        </nav>
+
+        <div className="side-group-title second">PERINGKAT & PRESENTASI</div>
+        <nav aria-label="Navigasi Peringkat & Presentasi">
+          <button
+            type="button"
+            onClick={() => handleNav('ranking')}
+            className={`nav-link nav-button ${activePage === 'ranking' ? 'active' : ''}`}
+          >
+            <Trophy size={18} /> Peringkat Wilayah
+            {activePage === 'ranking' && <span className="nav-active-mark" />}
+          </button>
+          <button
+            type="button"
+            onClick={() => handleNav('story')}
+            className={`nav-link nav-button ${activePage === 'story' ? 'active' : ''}`}
+          >
+            <BookOpen size={18} /> Story Editor PPT
+            {activePage === 'story' && <span className="nav-active-mark" />}
+          </button>
+          <button
+            type="button"
+            onClick={() => handleNav('presentation')}
+            className={`nav-link nav-button ${activePage === 'presentation' ? 'active' : ''}`}
+          >
+            <Presentation size={18} /> Presentasi 16:9
+            {activePage === 'presentation' && <span className="nav-active-mark" />}
+          </button>
+        </nav>
+
+        <div className="side-group-title second">PLATFORM & AUDIT</div>
+        <nav aria-label="Navigasi Platform">
+          <button
+            type="button"
+            onClick={() => handleNav('sync')}
+            className={`nav-link nav-button ${activePage === 'sync' ? 'active' : ''}`}
+          >
+            <Database size={18} /> Data & Sinkronisasi
+            {activePage === 'sync' && <span className="nav-active-mark" />}
+          </button>
+        </nav>
+
+        <div className="sidebar-bottom">
+          <div className="user-dot">{user.displayName.slice(0, 1).toUpperCase()}</div>
+          <div className="user-meta">
+            <strong>{user.displayName}</strong>
+            <small>{user.role}</small>
+          </div>
+          <button title="Keluar" onClick={onLogout} className="icon-btn side-logout">
+            <LogOut size={18} />
+          </button>
+        </div>
+      </aside>
+    </>
   );
 }
 
@@ -357,6 +386,10 @@ function Dashboard({session, onLogout, preview = false}: {session: Session | nul
   const [projectionData, setProjectionData] = useState<ProjectionData | null>(null);
   const [plansData, setPlansData] = useState<DevelopmentPlan[]>([]);
   const [syncRunsData, setSyncRunsData] = useState<SyncRun[]>([]);
+
+  // Mobile navigation & filter states
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [mobileFiltersExpanded, setMobileFiltersExpanded] = useState(false);
 
   const [loading, setLoading] = useState(true);
   const [fetching, setFetching] = useState(false);
@@ -560,71 +593,93 @@ function Dashboard({session, onLogout, preview = false}: {session: Session | nul
   // On-demand fetch for secondary tabs
   useEffect(() => {
     if (!period) return;
-    if (preview) {
-      if (activePage === 'ranking' && !rankingsData) {
-        setRankingsData(getPreviewRankings(period, product, ro));
-      }
-      return;
-    }
-    if (!session) return;
+    const isOffline = preview || !session;
     const qs = new URLSearchParams({period, product});
     if (ro) qs.set('ro', ro);
     if (rh) qs.set('rh', rh);
     if (area) qs.set('area', area);
 
     if (activePage === 'history' && !historyData) {
-      setFetching(true);
-      request<HistoryData>(`/api/v1/history?${qs}`, session)
-        .then(setHistoryData)
-        .catch(() => setHistoryData(getPreviewHistory(period, product, ro)))
-        .finally(() => setFetching(false));
+      if (isOffline) {
+        setHistoryData(getPreviewHistory(period, product, ro));
+      } else {
+        setFetching(true);
+        request<HistoryData>(`/api/v1/history?${qs}`, session)
+          .then(setHistoryData)
+          .catch(() => setHistoryData(getPreviewHistory(period, product, ro)))
+          .finally(() => setFetching(false));
+      }
     } else if (activePage === 'potential' && !potentialData) {
-      setFetching(true);
-      request<PotentialData>(`/api/v1/potential?${qs}`, session)
-        .then(setPotentialData)
-        .catch(() => setPotentialData(getPreviewPotential(period, product, ro)))
-        .finally(() => setFetching(false));
+      if (isOffline) {
+        setPotentialData(getPreviewPotential(period, product, ro));
+      } else {
+        setFetching(true);
+        request<PotentialData>(`/api/v1/potential?${qs}`, session)
+          .then(setPotentialData)
+          .catch(() => setPotentialData(getPreviewPotential(period, product, ro)))
+          .finally(() => setFetching(false));
+      }
     } else if (activePage === 'capacity' && !capacityData) {
-      setFetching(true);
-      request<CapacityData>(`/api/v1/capacity?${qs}`, session)
-        .then(setCapacityData)
-        .catch(() => setCapacityData(getPreviewCapacity(period, product, ro)))
-        .finally(() => setFetching(false));
+      if (isOffline) {
+        setCapacityData(getPreviewCapacity(period, product, ro));
+      } else {
+        setFetching(true);
+        request<CapacityData>(`/api/v1/capacity?${qs}`, session)
+          .then(setCapacityData)
+          .catch(() => setCapacityData(getPreviewCapacity(period, product, ro)))
+          .finally(() => setFetching(false));
+      }
     } else if (activePage === 'barriers' && !barriersData) {
-      setFetching(true);
-      request<BarriersData>(`/api/v1/barriers?${qs}`, session)
-        .then(setBarriersData)
-        .catch(() => setBarriersData(getPreviewBarriers(period, product, ro)))
-        .finally(() => setFetching(false));
+      if (isOffline) {
+        setBarriersData(getPreviewBarriers(period, product, ro));
+      } else {
+        setFetching(true);
+        request<BarriersData>(`/api/v1/barriers?${qs}`, session)
+          .then(setBarriersData)
+          .catch(() => setBarriersData(getPreviewBarriers(period, product, ro)))
+          .finally(() => setFetching(false));
+      }
     } else if (activePage === 'ranking' && !rankingsData) {
-      setFetching(true);
-      request<RankingsData>(`/api/v1/rankings?${qs}`, session)
-        .then(setRankingsData)
-        .catch(() => setRankingsData(getPreviewRankings(period, product, ro)))
-        .finally(() => setFetching(false));
+      if (isOffline) {
+        setRankingsData(getPreviewRankings(period, product, ro));
+      } else {
+        setFetching(true);
+        request<RankingsData>(`/api/v1/rankings?${qs}`, session)
+          .then(setRankingsData)
+          .catch(() => setRankingsData(getPreviewRankings(period, product, ro)))
+          .finally(() => setFetching(false));
+      }
     } else if (activePage === 'development') {
-      setFetching(true);
-      Promise.all([
-        request<ProjectionData>(`/api/v1/projections?${qs}`, session),
-        request<DevelopmentPlan[]>(`/api/v1/development-plans?${qs}`, session)
-      ]).then(([proj, pl]) => {
-        setProjectionData(proj);
-        setPlansData(pl);
-      }).catch(() => {
+      if (isOffline) {
         setProjectionData(getPreviewProjections(period, product, ro));
         setPlansData(getPreviewDevelopmentPlans(period, product, ro));
-      }).finally(() => setFetching(false));
+      } else {
+        setFetching(true);
+        Promise.all([
+          request<ProjectionData>(`/api/v1/projections?${qs}`, session),
+          request<DevelopmentPlan[]>(`/api/v1/development-plans?${qs}`, session)
+        ]).then(([proj, pl]) => {
+          setProjectionData(proj);
+          setPlansData(pl);
+        }).catch(() => {
+          setProjectionData(getPreviewProjections(period, product, ro));
+          setPlansData(getPreviewDevelopmentPlans(period, product, ro));
+        }).finally(() => setFetching(false));
+      }
     } else if (activePage === 'sync' && !syncRunsData.length) {
-      setFetching(true);
-      request<{runs: SyncRun[]}>('/api/v1/sync-runs', session)
-        .then(r => setSyncRunsData(r.runs))
-        .catch(() => {
-          setSyncRunsData([
-            { id: '1', source_name: 'BSI_DAILY_PERFORMANCE', status: 'SUKSES', records_read: 320, versions_published: 1, started_at: new Date().toISOString(), finished_at: new Date().toISOString(), error_message: null },
-            { id: '2', source_name: 'MASTER_BRANCH_MAPPING', status: 'SUKSES', records_read: 85, versions_published: 1, started_at: new Date(Date.now() - 3600000).toISOString(), finished_at: new Date(Date.now() - 3600000).toISOString(), error_message: null }
-          ]);
-        })
-        .finally(() => setFetching(false));
+      const fallbackRuns: SyncRun[] = [
+        { id: '1', source_name: 'BSI_DAILY_PERFORMANCE (04_AREA_PERFORMANCE)', status: 'SUKSES', records_read: 419, versions_published: 1, started_at: new Date().toISOString(), finished_at: new Date().toISOString(), error_message: null },
+        { id: '2', source_name: 'MASTER_BRANCH_MAPPING', status: 'SUKSES', records_read: 85, versions_published: 1, started_at: new Date(Date.now() - 3600000).toISOString(), finished_at: new Date(Date.now() - 3600000).toISOString(), error_message: null }
+      ];
+      if (isOffline) {
+        setSyncRunsData(fallbackRuns);
+      } else {
+        setFetching(true);
+        request<{runs: SyncRun[]}>('/api/v1/sync-runs', session)
+          .then(r => setSyncRunsData(r.runs))
+          .catch(() => setSyncRunsData(fallbackRuns))
+          .finally(() => setFetching(false));
+      }
     }
   }, [activePage, period, product, ro, rh, area, session, preview, historyData, potentialData, capacityData, barriersData, rankingsData, syncRunsData.length]);
 
@@ -806,22 +861,34 @@ function Dashboard({session, onLogout, preview = false}: {session: Session | nul
         onLogout={onLogout}
         activePage={activePage}
         onNavigate={setActivePage}
+        isOpen={mobileNavOpen}
+        onClose={() => setMobileNavOpen(false)}
       />
 
       <main className="main">
         <header className="topbar">
-          <div className="breadcrumb">
-            EKA <span>/</span> Business Overview <span>/</span> <strong>
-              {activePage === 'business' ? 'Pilar 1: Kinerja Bisnis' :
-               activePage === 'history' ? 'Jejak Kinerja 2026' :
-               activePage === 'potential' ? 'Pilar 2: Potensi Bisnis' :
-               activePage === 'capacity' ? 'Pilar 3: Kapasitas Tim' :
-               activePage === 'barriers' ? 'Pilar 4: Hambatan Pertumbuhan' :
-               activePage === 'development' ? 'Pilar 5: Langkah Pengembangan' :
-               activePage === 'ranking' ? 'Peringkat Wilayah Nasional' :
-               activePage === 'story' ? 'Story Editor Narasi PPT' :
-               activePage === 'presentation' ? 'Presentasi 16:9 Eksekutif' : 'Platform & Log Sinkronisasi'}
-            </strong>
+          <div className="topbar-left">
+            <button
+              type="button"
+              className="mobile-hamburger-btn"
+              onClick={() => setMobileNavOpen(true)}
+              aria-label="Buka Menu"
+            >
+              <Menu size={20} />
+            </button>
+            <div className="breadcrumb">
+              EKA <span>/</span> Business Overview <span>/</span> <strong>
+                {activePage === 'business' ? 'Pilar 1: Kinerja Bisnis' :
+                 activePage === 'history' ? 'Jejak Kinerja 2026' :
+                 activePage === 'potential' ? 'Pilar 2: Potensi Bisnis' :
+                 activePage === 'capacity' ? 'Pilar 3: Kapasitas Tim' :
+                 activePage === 'barriers' ? 'Pilar 4: Hambatan Pertumbuhan' :
+                 activePage === 'development' ? 'Pilar 5: Langkah Pengembangan' :
+                 activePage === 'ranking' ? 'Peringkat Wilayah Nasional' :
+                 activePage === 'story' ? 'Story Editor Narasi PPT' :
+                 activePage === 'presentation' ? 'Presentasi 16:9 Eksekutif' : 'Platform & Log Sinkronisasi'}
+              </strong>
+            </div>
           </div>
           <div className="top-right">
             <ShieldCheck size={16} />
@@ -855,8 +922,23 @@ function Dashboard({session, onLogout, preview = false}: {session: Session | nul
             />
           ) : (
             <>
+              {/* MOBILE COMPACT FILTER TOGGLE */}
+              <div className="mobile-filter-bar">
+                <div className="mobile-filter-summary">
+                  <Filter size={14} />
+                  <span>{monthName(period)} · {product === 'ALL' ? 'Semua Produk' : product} {ro ? `· ${ro}` : ''}</span>
+                </div>
+                <button
+                  type="button"
+                  className="mobile-filter-toggle"
+                  onClick={() => setMobileFiltersExpanded(x => !x)}
+                >
+                  {mobileFiltersExpanded ? 'Tutup Filter' : 'Filter Data'}
+                </button>
+              </div>
+
               {/* TOP FILTERS BAR (CASCADING: PERIODE -> PRODUK -> RO -> RH -> AREA) */}
-              <section className="filters-panel">
+              <section className={`filters-panel ${mobileFiltersExpanded ? 'mobile-open' : ''}`}>
                 <div className="filter-unit">
                   <label>PERIODE DATA</label>
                   <div className="select-wrap">
@@ -1278,6 +1360,50 @@ function Dashboard({session, onLogout, preview = false}: {session: Session | nul
           </ErrorBoundary>
         </div>
       </main>
+
+      {/* MOBILE BOTTOM NAVIGATION BAR */}
+      <nav className="mobile-bottom-nav" aria-label="Navigasi Bawah Smartphone">
+        <button
+          type="button"
+          className={`m-bottom-tab ${activePage === 'business' ? 'active' : ''}`}
+          onClick={() => setActivePage('business')}
+        >
+          <BarChart3 size={19} />
+          <span>Pilar 1</span>
+        </button>
+        <button
+          type="button"
+          className={`m-bottom-tab ${activePage === 'potential' ? 'active' : ''}`}
+          onClick={() => setActivePage('potential')}
+        >
+          <Target size={19} />
+          <span>Pilar 2</span>
+        </button>
+        <button
+          type="button"
+          className={`m-bottom-tab ${activePage === 'capacity' ? 'active' : ''}`}
+          onClick={() => setActivePage('capacity')}
+        >
+          <Users size={19} />
+          <span>Pilar 3</span>
+        </button>
+        <button
+          type="button"
+          className={`m-bottom-tab ${activePage === 'ranking' ? 'active' : ''}`}
+          onClick={() => setActivePage('ranking')}
+        >
+          <Trophy size={19} />
+          <span>Peringkat</span>
+        </button>
+        <button
+          type="button"
+          className="m-bottom-tab"
+          onClick={() => setMobileNavOpen(true)}
+        >
+          <Menu size={19} />
+          <span>Menu</span>
+        </button>
+      </nav>
     </div>
   );
 }

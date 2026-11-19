@@ -408,14 +408,10 @@ export function PresentationStudio({
   const handlePrint = () => {
     const prevTitle = document.title;
     document.title = `EKA-BSI-Presentation-${ro ? ro.replace(/\s+/g, '_') : 'Nasional'}-${period}`;
-    requestAnimationFrame(() => {
-      setTimeout(() => {
-        window.print();
-        setTimeout(() => {
-          document.title = prevTitle;
-        }, 1500);
-      }, 100);
-    });
+    window.print();
+    setTimeout(() => {
+      document.title = prevTitle;
+    }, 500);
   };
 
   const handleDownloadHtml = () => {

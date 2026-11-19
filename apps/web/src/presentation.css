@@ -1060,14 +1060,17 @@
     break-after: page !important;
     page-break-inside: avoid !important;
     break-inside: avoid !important;
-    width: 100% !important;
+    width: 100vw !important;
     height: 100vh !important;
+    max-height: 100vh !important;
     box-sizing: border-box !important;
     background: #ffffff !important;
     padding: 0 !important;
     margin: 0 !important;
     overflow: hidden !important;
-    display: block !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
   }
   .studio-print-page:last-child {
     page-break-after: auto !important;
@@ -1076,13 +1079,13 @@
   /* Slide fills the page in 16:9 without circular loops */
   .studio-print-page .studio-slide {
     width: 100% !important;
-    height: 100% !important;
+    height: auto !important;
     aspect-ratio: 16 / 9 !important;
-    container-type: inline-size !important;
+    max-height: 100vh !important;
     border-radius: 0 !important;
     border: none !important;
     box-shadow: none !important;
-    margin: 0 !important;
-    padding: 2.8cqw 4.4cqw 2.2cqw !important;
+    margin: 0 auto !important;
+    padding: 24px 36px !important;
   }
 }

@@ -116,57 +116,68 @@ export function getPreviewRankings(period: string, product: string, ro?: string)
     .sort((a, b) => b.attainment_pct - a.attainment_pct)
     .map((r, i) => ({ rank: i + 1, ...r }));
 
-  // RH Rankings
-  const rhNames = ['Budi Santoso', 'Hendro Wijaya', 'Sugi H.', 'M. Villar', 'Fandi B.', 'Ahmad Fauzi'];
-  const rhRankings = rhNames.map((name, i) => {
-    const target = 15e9 + i * 2e9;
-    const achieve = 16e9 + (5 - i) * 2.5e9;
-    return {
-      rank: i + 1,
-      rh_key: `RH00${i + 1}`,
+  // RH Rankings: agregasi langsung dari nama Region Head asli pada dataset BSI resmi
+  const rhMap = new Map<string, {rh_key: string; rh_name: string; ro_name: string; target_rp: number; achievement_rp: number; sf_active: number; area_count: number}>();
+  for (const a of areas) {
+    if (!a.rh_names) continue;
+    const name = a.rh_names;
+    const key = a.rh_user_keys || name;
+    const roName = a.ro_filter_group || a.ro_source || '—';
+    const curr = rhMap.get(name) || {
+      rh_key: key,
       rh_name: name,
-      ro_name: previewRos[i % previewRos.length],
-      target_rp: target,
-      achievement_rp: achieve,
-      attainment_pct: achieve / target,
-      sf_active: 25 + i * 5,
-      productivity_per_sf_rp: achieve / (25 + i * 5),
-      area_count: 2 + (i % 3)
+      ro_name: roName,
+      target_rp: 0,
+      achievement_rp: 0,
+      sf_active: 0,
+      area_count: 0
     };
-  }).sort((a, b) => b.attainment_pct - a.attainment_pct).map((r, i) => ({ ...r, rank: i + 1 }));
+    curr.target_rp += a.target_rp || 0;
+    curr.achievement_rp += a.achievement_rp || 0;
+    curr.sf_active += a.sf_active_total || 0;
+    curr.area_count += 1;
+    rhMap.set(name, curr);
+  }
 
-  // Korea Rankings
-  const sampleKoreas = [
-    { name: 'Tarisa Jesika Harmaini', areaId: 'AREA010', areaName: 'AREA MANADO', rh: 'Ahmad Fauzi', sf: 12, target: 2.9e9, achieve: 7.37e9, status: 'GREEN', rate: 0.95 },
-    { name: 'Chamari Aksar', areaId: 'AREA003', areaName: 'AREA MALANG', rh: 'Hendro Wijaya', sf: 15, target: 2.9e9, achieve: 6.92e9, status: 'GREEN', rate: 0.92 },
-    { name: 'Astati Saflia', areaId: 'AREA009', areaName: 'AREA MAKASSAR', rh: 'Ahmad Fauzi', sf: 18, target: 6.1e9, achieve: 14.02e9, status: 'GREEN', rate: 0.88 },
-    { name: 'Rico Triyadi', areaId: 'AREA011', areaName: 'AREA BANDUNG', rh: 'Budi Santoso', sf: 20, target: 9.6e9, achieve: 21.5e9, status: 'GREEN', rate: 0.96 },
-    { name: 'Sri Wulandari', areaId: 'AREA004', areaName: 'AREA SURABAYA', rh: 'Hendro Wijaya', sf: 14, target: 2.6e9, achieve: 5.8e9, status: 'GREEN', rate: 0.90 },
-    { name: 'M. Abduh', areaId: 'AREA001', areaName: 'AREA BALIKPAPAN', rh: 'M. Villar', sf: 22, target: 13.6e9, achieve: 28.4e9, status: 'GREEN', rate: 0.85 },
-    { name: 'Totok Agus Sopiyan', areaId: 'AREA007', areaName: 'AREA SOLO', rh: 'Fandi B.', sf: 16, target: 6.5e9, achieve: 11.2e9, status: 'GREY', rate: 0.74 },
-    { name: 'Mirda Ayu Citra Daniar', areaId: 'AREA005', areaName: 'AREA JEMBER', rh: 'Sugi H.', sf: 10, target: 3.7e9, achieve: 4.8e9, status: 'GREY', rate: 0.65 },
-    { name: 'Mufidatur Rodiana', areaId: 'AREA002', areaName: 'AREA BANJARMASIN', rh: 'M. Villar', sf: 8, target: 2.6e9, achieve: 2.9e9, status: 'RED', rate: 0.45 },
-    { name: "Ma'rifatul Azizah", areaId: 'AREA006', areaName: 'AREA SEMARANG', rh: 'Fandi B.', sf: 9, target: 2.2e9, achieve: 2.1e9, status: 'RED', rate: 0.42 },
+  const rhRankings = Array.from(rhMap.values())
+    .map(r => ({
+      ...r,
+      attainment_pct: r.target_rp > 0 ? r.achievement_rp / r.target_rp : 0,
+      productivity_per_sf_rp: r.sf_active > 0 ? r.achievement_rp / r.sf_active : 0
+    }))
+    .sort((a, b) => b.attainment_pct - a.attainment_pct)
+    .map((r, i) => ({ ...r, rank: i + 1 }));
+
+  // Korea Rankings: terhubung langsung dengan Area & Region Head resmi
+  const topAreasForKoreas = areas.filter(a => a.rh_names).slice(0, 10);
+  const sampleKoreaNames = [
+    'Tarisa Jesika Harmaini', 'Chamari Aksar', 'Astati Saflia', 'Rico Triyadi',
+    'Sri Wulandari', 'M. Abduh', 'Totok Agus Sopiyan', 'Mirda Ayu Citra Daniar',
+    'Mufidatur Rodiana', "Ma'rifatul Azizah"
   ];
-
-  const koreaRankings: KoreaRanking[] = sampleKoreas.map((k, i) => {
-    const attain = k.achieve / k.target;
+  const koreaRankings: KoreaRanking[] = topAreasForKoreas.map((a, i) => {
+    const kName = sampleKoreaNames[i % sampleKoreaNames.length];
+    const sf = a.sf_active_total || 12;
+    const target = Math.round((a.target_rp || 5e9) * 0.45);
+    const achieve = Math.round((a.achievement_rp || 4e9) * 0.45);
+    const attain = target > 0 ? achieve / target : 0.85;
+    const rate = a.korea_activity_rate || 0.85;
     return {
       rank: i + 1,
       nip_korea: `407${1000 + i}`,
-      nama_korea: k.name,
-      area_id: k.areaId,
-      area_name: k.areaName,
-      rh_name: k.rh,
-      target_rp: k.target,
-      achievement_rp: k.achieve,
+      nama_korea: kName,
+      area_id: a.area_id,
+      area_name: a.area_name,
+      rh_name: a.rh_names || 'Region Head',
+      target_rp: target,
+      achievement_rp: achieve,
       attainment_pct: attain,
-      sf_active: k.sf,
-      sf_green: Math.round(k.sf * 0.6),
-      sf_grey: Math.round(k.sf * 0.25),
-      sf_red: Math.max(0, k.sf - Math.round(k.sf * 0.6) - Math.round(k.sf * 0.25)),
-      korea_activity_rate: k.rate,
-      korea_activity_status: k.status
+      sf_active: sf,
+      sf_green: a.sf_green ?? Math.round(sf * 0.6),
+      sf_grey: a.sf_grey ?? Math.round(sf * 0.25),
+      sf_red: a.sf_red ?? Math.max(0, sf - Math.round(sf * 0.6) - Math.round(sf * 0.25)),
+      korea_activity_rate: rate,
+      korea_activity_status: rate >= 0.8 ? 'GREEN' : rate >= 0.6 ? 'GREY' : 'RED'
     };
   }).sort((a, b) => b.attainment_pct - a.attainment_pct).map((k, i) => ({ ...k, rank: i + 1 }));
 
