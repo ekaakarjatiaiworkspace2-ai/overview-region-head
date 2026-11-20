@@ -13,7 +13,7 @@ interface JatiFloatingCopilotProps {
   rh: string;
   area: string;
   overview: Overview | null;
-  user: UserProfile;
+  user?: UserProfile | null;
   onNavigateToStory: () => void;
 }
 
@@ -121,16 +121,17 @@ export function JatiFloatingCopilot({
   // Initial welcome message when user first opens the dialog
   useEffect(() => {
     if (messages.length === 0) {
+      const name = user?.displayName || 'Admin EKA';
       setMessages([
         {
           id: 'welcome',
           sender: 'jati',
-          text: `Halo ${user.displayName}! Saya Jati AI, asisten analitik Anda 🌱. Radar saya sedang memantau data **${scopeLabel}** (${period}). Silakan klik tombol **"What's Next?"** di atas atau pilih aksi cepat untuk membedah data lapangan!`,
+          text: `Halo ${name}! Saya Jati AI, asisten analitik Anda 🌱. Radar saya sedang memantau data **${scopeLabel}** (${period}). Silakan klik tombol **"What's Next?"** di atas atau pilih aksi cepat untuk membedah data lapangan!`,
           timestamp: 'Sekarang',
         },
       ]);
     }
-  }, [user.displayName, scopeLabel, period]);
+  }, [user?.displayName, scopeLabel, period]);
 
   // Handle Mascot toggle
   const toggleOpen = () => {

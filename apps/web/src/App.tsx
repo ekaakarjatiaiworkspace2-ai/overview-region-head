@@ -1444,7 +1444,11 @@ export function App() {
     return <div className="center-loading"><RefreshCw className="rotate" /> Memuat platform...</div>;
   }
   if (preview && previewEnabled) {
-    return <Dashboard session={null} preview onLogout={() => setPreview(false)} />;
+    return (
+      <ErrorBoundary>
+        <Dashboard session={null} preview onLogout={() => setPreview(false)} />
+      </ErrorBoundary>
+    );
   }
   if (!session) {
     return <Login onLogin={() => {}} onPreview={() => setPreview(true)} />;
