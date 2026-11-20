@@ -1675,7 +1675,7 @@ textarea.form-control {
   }
 }
 
-/* Layered Poses Transition (<img> tags) */
+/* Layered Poses Transition (<img> tags) with 3D Depth */
 .jati-pose-img {
   position: absolute;
   inset: 0;
@@ -1683,9 +1683,11 @@ textarea.form-control {
   height: 100%;
   object-fit: contain;
   opacity: 0;
-  transform: scale(0.95);
+  transform: scale(0.96);
   transition: opacity 0.32s ease, transform 0.32s cubic-bezier(0.16, 1, 0.3, 1);
   pointer-events: none;
+  filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.28)) drop-shadow(0 2px 6px rgba(16, 185, 129, 0.2));
+  will-change: transform, opacity;
 }
 
 .jati-pose-img.active {
@@ -1694,14 +1696,77 @@ textarea.form-control {
   pointer-events: auto;
 }
 
-/* Synchronized Shadow */
+/* 3D Blinking Effect */
+.jati-body-container.is-blinking .jati-pose-img.active {
+  transform: scaleY(0.93) scaleX(1.02);
+  filter: brightness(1.06);
+}
+
+/* 3D Specular Sheen / Highlight Glow */
+.jati-specular-light {
+  position: absolute;
+  top: 4%;
+  left: 18%;
+  width: 44%;
+  height: 38%;
+  background: radial-gradient(circle at center, rgba(255, 255, 255, 0.25) 0%, transparent 68%);
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0.7;
+  mix-blend-mode: overlay;
+  z-index: 4;
+}
+
+/* 3D Ambient Particles */
+.jati-ambient-particles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.jati-ambient-particles .particle {
+  position: absolute;
+  font-size: 13px;
+  user-select: none;
+  pointer-events: none;
+  animation: particleSpinFloat 3.8s ease-in-out infinite;
+  transition: transform 0.15s ease-out;
+}
+
+.jati-ambient-particles .p1 {
+  top: -4px;
+  right: 2px;
+  animation-delay: 0s;
+}
+
+.jati-ambient-particles .p2 {
+  bottom: 8px;
+  left: -2px;
+  font-size: 11px;
+  animation-delay: 1.8s;
+}
+
+@keyframes particleSpinFloat {
+  0%, 100% {
+    transform: translateY(0px) scale(0.9);
+    opacity: 0.75;
+  }
+  50% {
+    transform: translateY(-8px) scale(1.18);
+    opacity: 1;
+    filter: drop-shadow(0 0 6px rgba(251, 191, 36, 0.8));
+  }
+}
+
+/* Synchronized 3D Shadow */
 .jati-shadow {
   position: absolute;
-  bottom: 6px;
-  left: 24%;
-  width: 52%;
+  bottom: 2px;
+  left: 20%;
+  width: 60%;
   height: 16px;
-  background: radial-gradient(ellipse at center, rgba(15, 23, 42, 0.28) 0%, transparent 70%);
+  background: radial-gradient(ellipse at center, rgba(15, 23, 42, 0.42) 0%, rgba(16, 185, 129, 0.1) 45%, transparent 72%);
   border-radius: 50%;
   z-index: 1;
   pointer-events: none;
@@ -1714,11 +1779,11 @@ textarea.form-control {
 @keyframes jatiShadow {
   0%, 100% {
     transform: scale(1);
-    opacity: 0.35;
+    opacity: 0.42;
   }
   50% {
-    transform: scale(0.78);
-    opacity: 0.16;
+    transform: scale(0.72);
+    opacity: 0.18;
   }
 }
 
@@ -2450,12 +2515,13 @@ textarea.form-control {
 }
 
 .mascot-avatar-box {
-  width: 72px;
-  height: 72px;
+  width: 90px;
+  height: 90px;
   display: flex;
   align-items: center;
   justify-content: center;
-  filter: drop-shadow(0 10px 16px rgba(0, 0, 0, 0.35));
+  filter: drop-shadow(0 12px 24px rgba(15, 23, 42, 0.4)) drop-shadow(0 4px 10px rgba(16, 185, 129, 0.25));
+  position: relative;
 }
 
 .mascot-callout-pill {

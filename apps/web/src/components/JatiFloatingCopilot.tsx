@@ -779,7 +779,7 @@ export function JatiFloatingCopilot({
         aria-label="Buka Asisten Jati AI"
       >
         <div className="mascot-avatar-box">
-          <JatiMascot pose={pose} size={64} interactive={false} autoFloat={!isOpen} />
+          <JatiMascot pose={pose} size={82} interactive={false} autoFloat={!isOpen} />
         </div>
 
         {!isOpen && (
