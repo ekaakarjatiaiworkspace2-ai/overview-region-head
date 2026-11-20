@@ -2,9 +2,13 @@ import React, { useState, useEffect, useRef } from 'react';
 import { JatiMascot, JatiPose } from './JatiMascot';
 import { type Overview, type UserProfile, type AreaKpi } from '../api';
 import {
-  Sparkles, X, Send, Share2, FileText, CheckCircle2, ArrowRight,
-  TrendingUp, AlertTriangle, Users, Target, HelpCircle, Zap, Copy
+  Sparkles, X, Send, Share2, FileText, CheckCircle2,
+  TrendingUp, AlertTriangle, Users, Target, Zap, Copy
 } from 'lucide-react';
+import {
+  askJatiGemini, getCachedConnectionStatus,
+  type GeminiConnectionStatus
+} from '../gemini';
 
 interface JatiFloatingCopilotProps {
   period: string;
@@ -21,6 +25,7 @@ interface ChatMessage {
   id: string;
   sender: 'jati' | 'user';
   text?: string;
+  modelBadge?: string;
   structured?: {
     title: string;
     badge?: string;
@@ -59,7 +64,15 @@ export function JatiFloatingCopilot({
   const [inputText, setInputText] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [aiStatus, setAiStatus] = useState<GeminiConnectionStatus>(getCachedConnectionStatus());
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Listen to connection changes
+  useEffect(() => {
+    const handleStatusChange = () => setAiStatus(getCachedConnectionStatus());
+    window.addEventListener('gemini-status-changed', handleStatusChange);
+    return () => window.removeEventListener('gemini-status-changed', handleStatusChange);
+  }, []);
 
   // Derive human-readable scope label
   const scopeLabel = area
@@ -126,7 +139,8 @@ export function JatiFloatingCopilot({
         {
           id: 'welcome',
           sender: 'jati',
-          text: `Halo ${name}! Saya Jati AI, asisten analitik Anda 🌱. Radar saya sedang memantau data **${scopeLabel}** (${period}). Silakan klik tombol **"What's Next?"** di atas atau pilih aksi cepat untuk membedah data lapangan!`,
+          text: `Halo ${name}! Saya **Jati AI**, Copilot analitik Anda 🌱.\nRadar data saya terhubung ke Google Gemini dan memantau **${scopeLabel}** (${period}).\n\nSilakan klik **"What's Next?"** di atas atau tanyakan kondisi spesifik wilayah (contoh: *"apa yang harus ditingkatkan dari RO Semarang?"*).`,
+          modelBadge: 'Gemini 3.8 Flash Online',
           timestamp: 'Sekarang',
         },
       ]);
@@ -151,32 +165,43 @@ export function JatiFloatingCopilot({
     }
   }, [messages, isOpen]);
 
-  // THE KILLER FEATURE: "WHAT'S NEXT? (Langkah Hari Ini & Capai Target)"
-  const handleWhatsNext = () => {
+  // THE HERO FEATURE: "WHAT'S NEXT? (Langkah Hari Ini & Capai Target)"
+  const handleWhatsNext = async () => {
     setIsAnalyzing(true);
     setPose('thinking'); // Mascot is thinking!
 
-    setTimeout(() => {
-      setIsAnalyzing(false);
-      setPose('success'); // Mascot celebrates success!
+    const realStr = formatMilyar(stats.totalReal);
+    const targetStr = formatMilyar(stats.totalTarget);
+    const gapStr = formatMilyar(stats.gap);
+    const pipelineStr = formatMilyar(stats.pipeline);
+    const pctStr = `${stats.pct.toFixed(1)}%`;
 
-      const realStr = formatMilyar(stats.totalReal);
-      const targetStr = formatMilyar(stats.totalTarget);
-      const gapStr = formatMilyar(stats.gap);
-      const pipelineStr = formatMilyar(stats.pipeline);
-      const pctStr = `${stats.pct.toFixed(1)}%`;
+    const topName = stats.topArea ? stats.topArea.area_name : 'Wilayah Unggulan';
+    const bottomName = stats.bottomArea ? stats.bottomArea.area_name : 'Area Pendukung';
 
-      const topName = stats.topArea ? stats.topArea.area_name : 'Wilayah Utama';
-      const bottomName = stats.bottomArea ? stats.bottomArea.area_name : 'Area Pendukung';
+    // WhatsApp & PPT drafts
+    const waDraft = `Yth. Koordinator Area & Tim ${scopeLabel},\n\nEvaluasi Kinerja ${period}:\n• Realisasi: ${realStr} (${pctStr}) dari Target ${targetStr}\n• Sisa Gap Target: ${gapStr}\n• Pipeline Aktif: ${pipelineStr}\n\nInstruksi Aksi Hari Ini:\n1. Kawal ketat nasabah pipeline siap booking hari ini agar gap segera terpangkas.\n2. Tuntaskan verifikasi berkas pending dan koordinasikan percepatan SLIK di KC/KCP.\n3. Maksimalkan aktivitas seluruh ${stats.sfTotal} Sales Force aktif di lapangan.\n\nMari mengakar lebih kuat dan melaju lebih hebat mencapai target! Terima kasih.`;
+    const pptDraft = `[Slide Evaluasi ${scopeLabel} - ${period}]\n- Realisasi saat ini: ${realStr} (${pctStr}) dengan gap ${gapStr}.\n- Titik ungkit utama: akselerasi pipeline ${pipelineStr} dan peningkatan utilisasi ${stats.sfTotal} Sales Force.\n- Rencana aksi taktis: intervensi langsung pada cabang-cabang kuadran Q3/Q4 untuk mengamankan booking mingguan.`;
 
-      // Tailored WA text
-      const waDraft = `Yth. Koordinator Area & Tim ${scopeLabel},\n\nEvaluasi Kinerja ${period}:\n• Realisasi: ${realStr} (${pctStr}) dari Target ${targetStr}\n• Sisa Gap Target: ${gapStr}\n• Pipeline Aktif: ${pipelineStr}\n\nInstruksi Aksi Hari Ini:\n1. Kawal ketat nasabah pipeline siap booking hari ini agar gap segera terpangkas.\n2. Tuntaskan verifikasi berkas pending dan koordinasikan percepatan SLIK di KC/KCP.\n3. Maksimalkan aktivitas seluruh ${stats.sfTotal} Sales Force aktif di lapangan.\n\nMari mengakar lebih kuat dan melaju lebih hebat mencapai target! Terima kasih.`;
+    try {
+      const aiRes = await askJatiGemini({
+        question: `Rekomendasikan langkah taktis "What's Next?" untuk ${scopeLabel} periode ${period}. Berikan analisis kondisi aktual, aksi taktis hari ini (24 jam), dan cara mencapai target.`,
+        period,
+        product,
+        ro,
+        rh,
+        area,
+        overview,
+        isWhatsNext: true,
+      });
 
-      const pptDraft = `[Slide Evaluasi ${scopeLabel} - ${period}]\n- Realisasi saat ini: ${realStr} (${pctStr}) dengan gap ${gapStr}.\n- Titik ungkit utama: akselerasi pipeline ${pipelineStr} dan peningkatan utilisasi ${stats.sfTotal} Sales Force.\n- Rencana aksi taktis: intervensi langsung pada cabang-cabang kuadran Q3/Q4 untuk mengamankan booking mingguan.`;
+      setPose('success');
 
+      // Structured Decision Intelligence Message
       const newMsg: ChatMessage = {
         id: `whats-next-${Date.now()}`,
         sender: 'jati',
+        modelBadge: `Google ${aiRes.model}`,
         structured: {
           title: `🎯 Rekomendasi Taktis: ${scopeLabel}`,
           badge: `CAPAIAN: ${pctStr} | GAP: ${gapStr}`,
@@ -202,54 +227,91 @@ export function JatiFloatingCopilot({
           waMessage: waDraft,
           pptSnippet: pptDraft,
         },
+        text: aiRes.text, // Full AI Analysis attached!
         timestamp: 'Baru saja',
       };
 
       setMessages(prev => [...prev, newMsg]);
-    }, 700);
+    } catch (err) {
+      console.error(err);
+      setPose('success');
+      // Fallback structured message if network fails
+      const fallbackMsg: ChatMessage = {
+        id: `whats-next-${Date.now()}`,
+        sender: 'jati',
+        modelBadge: 'Jati Local Engine',
+        structured: {
+          title: `🎯 Rekomendasi Taktis: ${scopeLabel}`,
+          badge: `CAPAIAN: ${pctStr} | GAP: ${gapStr}`,
+          summary: `Realisasi ${realStr} (${pctStr}), gap ${gapStr}, pipeline ${pipelineStr}.`,
+          kondisi: [
+            `Realisasi: ${realStr} dari target ${targetStr} (${pctStr}).`,
+            `Pipeline aktif: ${pipelineStr}.`,
+          ],
+          harusHariIni: [
+            `Kawal pencairan SP3 siap booking hari ini.`,
+            `Percepat verifikasi berkas tertahan di KC.`,
+          ],
+          caraCapaiTarget: [
+            `Konversi pipeline aktif sebelum akhir bulan.`,
+            `Optimalkan produktivitas ${stats.sfTotal} Sales Force.`,
+          ],
+          waMessage: waDraft,
+          pptSnippet: pptDraft,
+        },
+        timestamp: 'Baru saja',
+      };
+      setMessages(prev => [...prev, fallbackMsg]);
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
   // Handle Quick Action Chips
-  const handleQuickAction = (actionKey: 'summary' | 'q3' | 'sf') => {
+  const handleQuickAction = async (actionKey: 'summary' | 'q3' | 'sf') => {
     setIsAnalyzing(true);
     setPose('thinking');
 
-    setTimeout(() => {
-      setIsAnalyzing(false);
+    let prompt = '';
+    if (actionKey === 'summary') {
+      prompt = `Berikan ringkasan eksekutif kinerja ${scopeLabel} (${period}) meliputi realisasi vs target, sisa gap, produktivitas SF, dan pipeline aktif.`;
+    } else if (actionKey === 'q3') {
+      prompt = `Bedah titik kritis cabang-cabang kuadran Q3 dan Q4 di ${scopeLabel}. Apa akar masalah utamanya dan tindakan cepat yang harus dilakukan hari ini?`;
+    } else {
+      prompt = `Analisis kapasitas tim Sales Force (SF) di ${scopeLabel}. Berapa rata-rata produktivitas saat ini dan bagaimana strategi meningkatkan closing per personel?`;
+    }
+
+    try {
+      const res = await askJatiGemini({
+        question: prompt,
+        period,
+        product,
+        ro,
+        rh,
+        area,
+        overview,
+      });
+
       setPose('success');
-
-      let reply: ChatMessage;
-
-      if (actionKey === 'summary') {
-        reply = {
-          id: `summary-${Date.now()}`,
+      setMessages(prev => [
+        ...prev,
+        {
+          id: `chip-${Date.now()}`,
           sender: 'jati',
-          text: `📊 **Ringkasan Kinerja ${scopeLabel} (${period}):**\n• **Realisasi:** ${formatMilyar(stats.totalReal)}\n• **Target:** ${formatMilyar(stats.totalTarget)} (${stats.pct.toFixed(1)}%)\n• **Sisa Gap:** ${formatMilyar(stats.gap)}\n• **Pipeline Aktif:** ${formatMilyar(stats.pipeline)}\n• **Sales Force:** ${stats.sfTotal} orang aktif di lapangan.\n\n💡 *Saran Jati:* Pipeline aktif Anda (${formatMilyar(stats.pipeline)}) cukup kuat untuk mengejar gap. Prioritaskan cabang-cabang dengan penyelesaian berkas tercepat hari ini!`,
+          text: res.text,
+          modelBadge: `Google ${res.model}`,
           timestamp: 'Baru saja',
-        };
-      } else if (actionKey === 'q3') {
-        reply = {
-          id: `q3-${Date.now()}`,
-          sender: 'jati',
-          text: `⚠️ **Analisis Area Kuadran Kritis (${scopeLabel}):**\nTerdeteksi **${stats.q3q4Count} Area** berada di kuadran Q3/Q4 (perlu perhatian khusus).\n\n📌 **Akar Masalah Umum:**\n1. Keterlambatan validasi dokumen nasabah di KC (rata-rata 3-5 hari kerja).\n2. Kendala riwayat SLIK pada pembiayaan Reguler.\n\n🎯 **Tindakan Cepat:** Lakukan koordinasi langsung dengan Koordinator Area untuk membersihkan backlog berkas hari ini.`,
-          timestamp: 'Baru saja',
-        };
-      } else {
-        const prodPerSf = stats.sfTotal > 0 ? stats.totalReal / stats.sfTotal : 0;
-        reply = {
-          id: `sf-${Date.now()}`,
-          sender: 'jati',
-          text: `👥 **Analisis Kapasitas Tim (${scopeLabel}):**\n• **Total SF Aktif:** ${stats.sfTotal} personel\n• **Rata-rata Produktivitas:** ${formatMilyar(prodPerSf)}/SF\n\n💡 *Rekomendasi:* Dorong SF di kuadran Q2 (kuadran kapasitas cukup namun booking tertahan) agar melakukan jemput bola berkas nasabah payroll.`,
-          timestamp: 'Baru saja',
-        };
-      }
-
-      setMessages(prev => [...prev, reply]);
-    }, 600);
+        },
+      ]);
+    } catch (err) {
+      setPose('hover');
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
-  // Handle Custom Question
-  const handleSendMessage = (e?: React.FormEvent) => {
+  // Handle Custom Question (POWERED DIRECTLY BY GEMINI 3.8 FLASH!)
+  const handleSendMessage = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!inputText.trim() || isAnalyzing) return;
 
@@ -267,35 +329,39 @@ export function JatiFloatingCopilot({
     setIsAnalyzing(true);
     setPose('thinking');
 
-    setTimeout(() => {
-      setIsAnalyzing(false);
+    try {
+      const res = await askJatiGemini({
+        question: userQuestion,
+        period,
+        product,
+        ro,
+        rh,
+        area,
+        overview,
+        history: messages.slice(-4).map(m => ({ sender: m.sender, text: m.text })),
+      });
+
       setPose('success');
-
-      const lower = userQuestion.toLowerCase();
-      let answerText = '';
-
-      if (lower.includes('target') || lower.includes('gap') || lower.includes('capai')) {
-        answerText = `🎯 Untuk mencapai target **${formatMilyar(stats.totalTarget)}** di **${scopeLabel}**, sisa gap yang harus dikejar adalah **${formatMilyar(stats.gap)}**.\nKunci akselerasinya: kawal konversi pipeline **${formatMilyar(stats.pipeline)}** yang sudah berstatus SP3 agar cair sebelum akhir minggu ini!`;
-      } else if (lower.includes('sf') || lower.includes('sales') || lower.includes('tim')) {
-        answerText = `👥 Total tim Sales Force di **${scopeLabel}** berjumlah **${stats.sfTotal} personel aktif**. Rata-rata produktivitas saat ini berada di kisaran **${formatMilyar(stats.sfTotal > 0 ? stats.totalReal / stats.sfTotal : 0)}/SF**.`;
-      } else if (lower.includes('korea') || lower.includes('koordinator')) {
-        answerText = `👔 Koordinator Area (Korea) di wilayah ini memegang peranan vital untuk menggerakkan cabang. Saran saya: adakan briefing taktis 15 menit pagi ini untuk memetakan nasabah prioritas per KC.`;
-      } else if (lower.includes('q3') || lower.includes('kendala') || lower.includes('hambatan')) {
-        answerText = `⚠️ Hambatan terbesar saat ini terpusat pada **${stats.q3q4Count} titik kuadran Q3/Q4**. Kendala utama adalah verifikasi kelengkapan berkas dan SLIK nasabah.`;
-      } else {
-        answerText = `Terima kasih atas pertanyaannya! Berdasarkan data aktif di **${scopeLabel}** (${period}), realisasi saat ini tercatat **${formatMilyar(stats.totalReal)}** (${stats.pct.toFixed(1)}%).\n\nUntuk langkah paling efektif hari ini, silakan tekan tombol **"What's Next?"** di atas untuk melihat panduan taktis lengkap mencapai target! 🌱`;
-      }
-
-      setMessages(prev => [
-        ...prev,
-        {
-          id: `jati-reply-${Date.now()}`,
-          sender: 'jati',
-          text: answerText,
-          timestamp: 'Baru saja',
-        },
-      ]);
-    }, 700);
+      const replyMsg: ChatMessage = {
+        id: `jati-reply-${Date.now()}`,
+        sender: 'jati',
+        text: res.text,
+        modelBadge: `Google ${res.model}`,
+        timestamp: 'Baru saja',
+      };
+      setMessages(prev => [...prev, replyMsg]);
+    } catch (err) {
+      setPose('hover');
+      const errMsg: ChatMessage = {
+        id: `jati-err-${Date.now()}`,
+        sender: 'jati',
+        text: `Maaf, terjadi kendala saat memproses jawaban: ${err instanceof Error ? err.message : 'Silakan periksa koneksi internet.'}`,
+        timestamp: 'Baru saja',
+      };
+      setMessages(prev => [...prev, errMsg]);
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
   const handleCopy = (text: string, id: string) => {
@@ -303,6 +369,71 @@ export function JatiFloatingCopilot({
     setCopiedId(id);
     setTimeout(() => setCopiedId(null), 2500);
   };
+
+  // Helper to render markdown text with formatting
+  const renderFormattedText = (rawText: string) => {
+    const lines = rawText.split('\n');
+    return lines.map((line, idx) => {
+      const trimmed = line.trim();
+      if (!trimmed) {
+        return <div key={idx} style={{ height: '8px' }} />;
+      }
+
+      // Headers ###
+      if (trimmed.startsWith('### ')) {
+        return (
+          <h4 key={idx} style={{ margin: '12px 0 6px', color: '#38bdf8', fontSize: '14px', fontWeight: '800' }}>
+            {trimmed.replace('### ', '')}
+          </h4>
+        );
+      }
+      if (trimmed.startsWith('## ')) {
+        return (
+          <h3 key={idx} style={{ margin: '14px 0 8px', color: '#4ade80', fontSize: '15px', fontWeight: '800' }}>
+            {trimmed.replace('## ', '')}
+          </h3>
+        );
+      }
+
+      // Bullet points
+      if (trimmed.startsWith('* ') || trimmed.startsWith('- ') || trimmed.startsWith('• ')) {
+        const itemContent = trimmed.substring(2);
+        return (
+          <div key={idx} style={{ display: 'flex', gap: '8px', marginBottom: '4px', paddingLeft: '4px' }}>
+            <span style={{ color: '#2ed573' }}>•</span>
+            <span>{parseBold(itemContent)}</span>
+          </div>
+        );
+      }
+
+      // Numbered lists e.g. 1. 2.
+      const numMatch = trimmed.match(/^(\d+)\.\s+(.*)/);
+      if (numMatch) {
+        return (
+          <div key={idx} style={{ display: 'flex', gap: '8px', marginBottom: '4px', paddingLeft: '4px' }}>
+            <strong style={{ color: '#38bdf8' }}>{numMatch[1]}.</strong>
+            <span>{parseBold(numMatch[2])}</span>
+          </div>
+        );
+      }
+
+      return (
+        <p key={idx} style={{ margin: '4px 0', lineHeight: '1.5' }}>
+          {parseBold(trimmed)}
+        </p>
+      );
+    });
+  };
+
+  function parseBold(text: string) {
+    const parts = text.split(/(\*\*.*?\*\*)/g);
+    return parts.map((part, i) => {
+      if (part.startsWith('**') && part.endsWith('**')) {
+        return <strong key={i} style={{ color: '#f1f5f9' }}>{part.slice(2, -2)}</strong>;
+      }
+      return part;
+    });
+  }
 
   return (
     <div className="jati-copilot-container">
@@ -325,7 +456,23 @@ export function JatiFloatingCopilot({
               </div>
             </div>
 
-            <div className="jati-header-controls">
+            <div className="jati-header-controls" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{
+                background: 'rgba(46, 213, 115, 0.15)',
+                color: '#2ed573',
+                fontSize: '10px',
+                fontWeight: '700',
+                padding: '3px 8px',
+                borderRadius: '12px',
+                border: '1px solid rgba(46, 213, 115, 0.3)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px'
+              }}>
+                <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#2ed573', display: 'inline-block' }} />
+                Gemini 3.8
+              </span>
+
               <button
                 type="button"
                 className="jati-close-btn"
@@ -372,12 +519,19 @@ export function JatiFloatingCopilot({
                 )}
 
                 <div className="jati-bubble">
-                  {/* Plain Text Message */}
-                  {msg.text && (
-                    <div className="jati-text-content">
-                      {msg.text.split('\n').map((line, idx) => (
-                        <p key={idx}>{line}</p>
-                      ))}
+                  {/* Model badge indicator */}
+                  {msg.modelBadge && (
+                    <div style={{
+                      fontSize: '9.5px',
+                      color: '#38bdf8',
+                      marginBottom: '4px',
+                      fontWeight: '700',
+                      letterSpacing: '0.04em',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}>
+                      <Sparkles size={11} /> {msg.modelBadge}
                     </div>
                   )}
 
@@ -484,6 +638,65 @@ export function JatiFloatingCopilot({
                     </div>
                   )}
 
+                  {/* Plain / Markdown Text Message */}
+                  {msg.text && (
+                    <div className="jati-text-content" style={{ marginTop: msg.structured ? '12px' : '0' }}>
+                      {renderFormattedText(msg.text)}
+                    </div>
+                  )}
+
+                  {/* Action tray for plain AI message */}
+                  {msg.sender === 'jati' && !msg.structured && msg.text && (
+                    <div style={{ display: 'flex', gap: '8px', marginTop: '10px', flexWrap: 'wrap' }}>
+                      <button
+                        type="button"
+                        onClick={() => handleCopy(msg.text || '', msg.id)}
+                        style={{
+                          background: 'rgba(255, 255, 255, 0.08)',
+                          color: '#e2e8f0',
+                          border: '1px solid rgba(255, 255, 255, 0.15)',
+                          borderRadius: '6px',
+                          padding: '4px 10px',
+                          fontSize: '11px',
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '5px'
+                        }}
+                      >
+                        {copiedId === msg.id ? (
+                          <>
+                            <CheckCircle2 size={12} className="text-emerald-400" /> Tersalin
+                          </>
+                        ) : (
+                          <>
+                            <Copy size={12} /> Salin Jawaban
+                          </>
+                        )}
+                      </button>
+
+                      <a
+                        href={`https://api.whatsapp.com/send?text=${encodeURIComponent(msg.text || '')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          background: 'rgba(37, 211, 102, 0.15)',
+                          color: '#25d366',
+                          border: '1px solid rgba(37, 211, 102, 0.3)',
+                          borderRadius: '6px',
+                          padding: '4px 10px',
+                          fontSize: '11px',
+                          textDecoration: 'none',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '5px'
+                        }}
+                      >
+                        <Share2 size={12} /> Bagikan ke WA
+                      </a>
+                    </div>
+                  )}
+
                   <span className="msg-time">{msg.timestamp}</span>
                 </div>
               </div>
@@ -500,7 +713,7 @@ export function JatiFloatingCopilot({
                     <span />
                     <span />
                   </div>
-                  <span>Jati sedang menelaah data {scopeLabel}...</span>
+                  <span>Jati sedang menelaah data {scopeLabel} via Google Gemini...</span>
                 </div>
               </div>
             )}
@@ -542,7 +755,7 @@ export function JatiFloatingCopilot({
               type="text"
               value={inputText}
               onChange={e => setInputText(e.target.value)}
-              placeholder={`Tanya kondisi ${scopeLabel}, target, kendala...`}
+              placeholder={`Tanya kondisi ${scopeLabel}, RO Semarang, target, kendala...`}
               disabled={isAnalyzing}
             />
             <button
