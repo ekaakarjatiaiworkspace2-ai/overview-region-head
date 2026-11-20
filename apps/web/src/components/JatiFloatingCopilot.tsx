@@ -139,13 +139,13 @@ export function JatiFloatingCopilot({
         {
           id: 'welcome',
           sender: 'jati',
-          text: `Halo ${name}! Saya Jati AI, rekan analitik Anda 🌱.\nRadar data saya terhubung ke Google Gemini dan siap memantau data ${scopeLabel} periode ${period}.\n\nBos bisa klik tombol "What's Next?" di atas untuk langkah taktis hari ini, atau tanyakan langsung kondisi wilayah ke saya, misalnya: "apa yang harus ditingkatkan dari RO Semarang?".`,
+          text: `Halo ${name}! Saya Jati AI, rekan analitik Anda 🌱.\n\nBos bisa klik tombol "What's Next?" di atas untuk langkah taktis hari ini, atau tanyakan langsung kondisi wilayah ke saya, misalnya: "apa yang harus ditingkatkan dari RO Semarang?".`,
           modelBadge: 'Gemini 3.8 Flash Online',
           timestamp: 'Sekarang',
         },
       ]);
     }
-  }, [user?.displayName, scopeLabel, period]);
+  }, [user?.displayName]);
 
   // Handle Mascot toggle
   const toggleOpen = () => {
