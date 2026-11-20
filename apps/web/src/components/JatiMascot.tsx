@@ -129,14 +129,6 @@ export function JatiMascot({
         </div>
       )}
 
-      {/* 3D Orbiting Ambient Particles */}
-      {autoFloat && (
-        <div className="jati-ambient-particles">
-          <span className="particle p1" style={{ transform: `translate3d(${tilt.y * 0.4}px, ${-tilt.x * 0.4}px, 20px)` }}>✨</span>
-          <span className="particle p2" style={{ transform: `translate3d(${-tilt.y * 0.3}px, ${tilt.x * 0.3}px, 15px)` }}>🌱</span>
-        </div>
-      )}
-
       {/* 3D Responsive Mascot Body with Interactive Tilt & Natural Breathing */}
       <div
         className={`jati-body-container ${autoFloat ? 'is-floating' : ''} ${isBouncing ? 'is-bouncing' : ''} ${isBlinking ? 'is-blinking' : ''}`}
