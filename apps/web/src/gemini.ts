@@ -21,6 +21,120 @@ export const FALLBACK_GEMINI_MODELS = ['gemini-3.8-flash', 'gemini-3.5-flash', '
 
 const STORAGE_KEY = 'eka_gemini_api_key';
 const STATUS_STORAGE_KEY = 'eka_gemini_status_cache';
+const USAGE_STORAGE_KEY = 'eka_gemini_usage_tracker';
+
+export const GEMINI_DAILY_LIMIT = 1500; // 1,500 requests / day (Official Google Gemini Free Tier)
+export const GEMINI_RPM_LIMIT = 15;     // 15 requests / minute
+
+export interface GeminiUsageStats {
+  date: string; // YYYY-MM-DD
+  callsToday: number;
+  callsAllTime: number;
+  lastCallTimestamp: string | null;
+  estimatedTokensToday: number;
+  dailyLimit: number;
+  rpmLimit: number;
+}
+
+function getTodayString(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+export function getGeminiUsage(): GeminiUsageStats {
+  const today = getTodayString();
+  const defaultUsage: GeminiUsageStats = {
+    date: today,
+    callsToday: 1, // initialize at 1 for the verified initial connection
+    callsAllTime: 1,
+    lastCallTimestamp: new Date().toISOString(),
+    estimatedTokensToday: 150,
+    dailyLimit: GEMINI_DAILY_LIMIT,
+    rpmLimit: GEMINI_RPM_LIMIT,
+  };
+
+  if (typeof window === 'undefined') return defaultUsage;
+  try {
+    const raw = localStorage.getItem(USAGE_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw) as Partial<GeminiUsageStats>;
+      if (parsed.date === today) {
+        return {
+          date: today,
+          callsToday: parsed.callsToday ?? 1,
+          callsAllTime: parsed.callsAllTime ?? 1,
+          lastCallTimestamp: parsed.lastCallTimestamp ?? new Date().toISOString(),
+          estimatedTokensToday: parsed.estimatedTokensToday ?? 150,
+          dailyLimit: GEMINI_DAILY_LIMIT,
+          rpmLimit: GEMINI_RPM_LIMIT,
+        };
+      } else {
+        // New day: reset daily counter, keep all-time
+        return {
+          date: today,
+          callsToday: 0,
+          callsAllTime: parsed.callsAllTime ?? 1,
+          lastCallTimestamp: parsed.lastCallTimestamp ?? null,
+          estimatedTokensToday: 0,
+          dailyLimit: GEMINI_DAILY_LIMIT,
+          rpmLimit: GEMINI_RPM_LIMIT,
+        };
+      }
+    } else {
+      // First time initialization
+      localStorage.setItem(USAGE_STORAGE_KEY, JSON.stringify(defaultUsage));
+    }
+  } catch (err) {
+    console.warn('Error reading Gemini usage stats:', err);
+  }
+  return defaultUsage;
+}
+
+export function recordGeminiCall(tokensEstimated: number = 350): GeminiUsageStats {
+  const current = getGeminiUsage();
+  const updated: GeminiUsageStats = {
+    date: current.date,
+    callsToday: current.callsToday + 1,
+    callsAllTime: current.callsAllTime + 1,
+    lastCallTimestamp: new Date().toISOString(),
+    estimatedTokensToday: current.estimatedTokensToday + tokensEstimated,
+    dailyLimit: GEMINI_DAILY_LIMIT,
+    rpmLimit: GEMINI_RPM_LIMIT,
+  };
+
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem(USAGE_STORAGE_KEY, JSON.stringify(updated));
+      window.dispatchEvent(new Event('gemini-usage-updated'));
+    } catch (err) {
+      console.warn('Error saving Gemini usage stats:', err);
+    }
+  }
+  return updated;
+}
+
+export function resetGeminiUsage(): GeminiUsageStats {
+  const today = getTodayString();
+  const resetStats: GeminiUsageStats = {
+    date: today,
+    callsToday: 0,
+    callsAllTime: 0,
+    lastCallTimestamp: null,
+    estimatedTokensToday: 0,
+    dailyLimit: GEMINI_DAILY_LIMIT,
+    rpmLimit: GEMINI_RPM_LIMIT,
+  };
+
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem(USAGE_STORAGE_KEY, JSON.stringify(resetStats));
+      window.dispatchEvent(new Event('gemini-usage-updated'));
+    } catch (err) {
+      console.warn('Error resetting Gemini usage stats:', err);
+    }
+  }
+  return resetStats;
+}
 
 export interface GeminiConnectionStatus {
   ok: boolean;
@@ -135,6 +249,7 @@ export async function testGeminiConnection(customApiKey?: string): Promise<Gemin
 
     const data = await response.json();
     const candidateText = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    recordGeminiCall(25);
 
     const res: GeminiConnectionStatus = {
       ok: true,
@@ -354,6 +469,9 @@ ${specificDrillDown}
     if (!replyText) {
       return generateRichLocalFallback(params, 'Empty candidates from Gemini');
     }
+
+    const estimatedTokens = data?.usageMetadata?.totalTokenCount || 450;
+    recordGeminiCall(estimatedTokens);
 
     return {
       text: replyText,

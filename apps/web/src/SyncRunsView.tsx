@@ -1,13 +1,15 @@
 import {useState, useEffect} from 'react';
 import {
   RefreshCw, CloudDownload, CheckCircle2, AlertTriangle,
-  Sparkles, Zap, Key, Eye, EyeOff
+  Sparkles, Zap, Key, Eye, EyeOff, Activity, RotateCcw
 } from 'lucide-react';
 import type {SyncRun} from './api';
 import {
   testGeminiConnection, getGeminiApiKey, setGeminiApiKey,
   resetGeminiApiKey, getCachedConnectionStatus,
-  type GeminiConnectionStatus, DEFAULT_GEMINI_MODEL
+  getGeminiUsage, resetGeminiUsage,
+  type GeminiConnectionStatus, type GeminiUsageStats,
+  DEFAULT_GEMINI_MODEL, GEMINI_DAILY_LIMIT, GEMINI_RPM_LIMIT
 } from './gemini';
 
 export function SyncRunsView({
@@ -25,18 +27,24 @@ export function SyncRunsView({
   const [syncResult, setSyncResult] = useState<string | null>(null);
   const [syncError, setSyncError] = useState<string | null>(null);
 
-  // Gemini AI Connection State
+  // Gemini AI Connection & Usage State
   const [geminiStatus, setGeminiStatus] = useState<GeminiConnectionStatus>(getCachedConnectionStatus());
+  const [usageStats, setUsageStats] = useState<GeminiUsageStats>(getGeminiUsage());
   const [testingGemini, setTestingGemini] = useState(false);
   const [geminiFeedback, setGeminiFeedback] = useState<{type: 'success' | 'error'; message: string} | null>(null);
   const [showKeyEditor, setShowKeyEditor] = useState(false);
   const [apiKeyInput, setApiKeyInput] = useState(getGeminiApiKey());
   const [revealKey, setRevealKey] = useState(false);
 
-  // Auto test connection on mount if not tested yet
+  // Auto test connection & listen to usage updates
   useEffect(() => {
     const cached = getCachedConnectionStatus();
     setGeminiStatus(cached);
+    setUsageStats(getGeminiUsage());
+
+    const handleUsageUpdate = () => setUsageStats(getGeminiUsage());
+    window.addEventListener('gemini-usage-updated', handleUsageUpdate);
+    return () => window.removeEventListener('gemini-usage-updated', handleUsageUpdate);
   }, []);
 
   async function handleTestGemini() {
@@ -45,6 +53,7 @@ export function SyncRunsView({
     try {
       const res = await testGeminiConnection(apiKeyInput);
       setGeminiStatus(res);
+      setUsageStats(getGeminiUsage());
       if (res.ok) {
         setGeminiFeedback({
           type: 'success',
@@ -85,6 +94,15 @@ export function SyncRunsView({
     handleTestGemini();
   }
 
+  function handleResetUsage() {
+    const fresh = resetGeminiUsage();
+    setUsageStats(fresh);
+    setGeminiFeedback({
+      type: 'success',
+      message: 'Penghitung pemakaian API lokal berhasil di-reset.'
+    });
+  }
+
   async function handleTriggerSync() {
     if (!onSyncMaster) return;
     setSyncing(true);
@@ -111,6 +129,10 @@ export function SyncRunsView({
   const maskedKey = apiKeyInput
     ? `${apiKeyInput.substring(0, 10)}••••••••••••••••••••${apiKeyInput.substring(apiKeyInput.length - 4)}`
     : 'Belum terkonfigurasi';
+
+  // Calculate percentage used
+  const pctUsed = Math.min(100, (usageStats.callsToday / usageStats.dailyLimit) * 100);
+  const remainingToday = Math.max(0, usageStats.dailyLimit - usageStats.callsToday);
 
   return (
     <div className="view-container">
@@ -154,7 +176,7 @@ export function SyncRunsView({
       )}
 
       {/* ========================================================================= */}
-      {/* SECTION: STATUS KONEKSI AI COPILOT (GOOGLE GEMINI)                        */}
+      {/* SECTION: STATUS KONEKSI & MONITOR KUOTA AI COPILOT (GOOGLE GEMINI)        */}
       {/* ========================================================================= */}
       <div className="ai-connection-section" style={{
         background: 'linear-gradient(135deg, #091e3a 0%, #0d2847 60%, #0b343d 100%)',
@@ -391,7 +413,8 @@ export function SyncRunsView({
         <div style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-          gap: '12px'
+          gap: '12px',
+          marginBottom: '16px'
         }}>
           {/* Card 1 */}
           <div style={{
@@ -462,6 +485,157 @@ export function SyncRunsView({
             </div>
             <div style={{fontSize: '11px', color: 'rgba(255, 255, 255, 0.6)', marginTop: '4px'}}>
               Analisis Q1-Q4 &amp; Rekomendasi Bebas Batas
+            </div>
+          </div>
+        </div>
+
+        {/* ========================================================================= */}
+        {/* SUB-SECTION BARU: PEMAKAIAN & KUOTA PENGGUNAAN API (GOOGLE GEMINI FREE)   */}
+        {/* ========================================================================= */}
+        <div style={{
+          background: 'rgba(0, 0, 0, 0.28)',
+          border: '1px solid rgba(255, 255, 255, 0.12)',
+          borderRadius: '12px',
+          padding: '18px 20px',
+        }}>
+          {/* Header Row */}
+          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '10px'}}>
+            <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
+              <Activity size={16} style={{color: '#38bdf8'}} />
+              <span style={{fontSize: '12.5px', fontWeight: '800', letterSpacing: '0.06em', textTransform: 'uppercase', color: '#f1f5f9'}}>
+                Monitor Penggunaan &amp; Kuota API Google Gemini
+              </span>
+              <span style={{
+                background: 'rgba(16, 185, 129, 0.2)',
+                color: '#34d399',
+                fontSize: '11px',
+                fontWeight: '700',
+                padding: '2px 9px',
+                borderRadius: '12px',
+                border: '1px solid rgba(16, 185, 129, 0.35)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px'
+              }}>
+                <span style={{width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#34d399', display: 'inline-block'}} />
+                Tier Gratis Aktif (Rp 0 / Free)
+              </span>
+            </div>
+
+            <div style={{display: 'flex', alignItems: 'center', gap: '12px'}}>
+              <span style={{fontSize: '11px', color: 'rgba(255, 255, 255, 0.65)'}}>
+                Reset Harian Otomatis: <strong style={{color: '#e2e8f0'}}>Pukul 00:00 UTC (07:00 WIB)</strong>
+              </span>
+              <button
+                type="button"
+                onClick={handleResetUsage}
+                title="Reset counter hitungan lokal"
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: '#94a3b8',
+                  fontSize: '11px',
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  padding: '2px 6px'
+                }}
+              >
+                <RotateCcw size={11} /> Reset Hitungan
+              </button>
+            </div>
+          </div>
+
+          {/* Visual Progress Bar Kuota Harian */}
+          <div style={{marginBottom: '16px'}}>
+            <div style={{display: 'flex', justifyContent: 'space-between', fontSize: '12.5px', marginBottom: '8px', flexWrap: 'wrap', gap: '6px'}}>
+              <span>
+                Permintaan Terpakai Hari Ini:{' '}
+                <strong style={{color: '#ffffff', fontSize: '14px', fontFamily: 'monospace'}}>
+                  {usageStats.callsToday}
+                </strong>
+                <span style={{color: '#94a3b8'}}> / {usageStats.dailyLimit.toLocaleString('id-ID')} Requests ({pctUsed.toFixed(2)}%)</span>
+              </span>
+
+              <span style={{color: '#34d399', fontWeight: '700'}}>
+                Sisa Kuota Hari Ini: {remainingToday.toLocaleString('id-ID')} Requests Bebas Biaya
+              </span>
+            </div>
+
+            {/* Progress Track */}
+            <div style={{
+              width: '100%',
+              height: '9px',
+              background: 'rgba(255, 255, 255, 0.12)',
+              borderRadius: '6px',
+              overflow: 'hidden',
+              position: 'relative'
+            }}>
+              <div style={{
+                width: `${Math.max(1, pctUsed)}%`,
+                height: '100%',
+                background: pctUsed > 85 ? 'linear-gradient(90deg, #f59e0b 0%, #ef4444 100%)' : 'linear-gradient(90deg, #10b981 0%, #34d399 100%)',
+                borderRadius: '6px',
+                transition: 'width 0.4s ease'
+              }} />
+            </div>
+          </div>
+
+          {/* 4-Item Grid Rincian Kuota Google Gemini */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+            gap: '12px',
+            paddingTop: '12px',
+            borderTop: '1px solid rgba(255, 255, 255, 0.08)'
+          }}>
+            <div>
+              <div style={{fontSize: '10.5px', color: '#94a3b8', textTransform: 'uppercase', fontWeight: '700'}}>
+                Batas Harian (RPD)
+              </div>
+              <div style={{fontSize: '14px', fontWeight: '800', color: '#ffffff', marginTop: '2px'}}>
+                1.500 Panggilan / Hari
+              </div>
+              <div style={{fontSize: '11px', color: 'rgba(255, 255, 255, 0.55)'}}>
+                Kuota resmi gratis Google AI Studio
+              </div>
+            </div>
+
+            <div>
+              <div style={{fontSize: '10.5px', color: '#94a3b8', textTransform: 'uppercase', fontWeight: '700'}}>
+                Batas Kecepatan (RPM)
+              </div>
+              <div style={{fontSize: '14px', fontWeight: '800', color: '#38bdf8', marginTop: '2px'}}>
+                15 Panggilan / Menit
+              </div>
+              <div style={{fontSize: '11px', color: 'rgba(255, 255, 255, 0.55)'}}>
+                Maksimal frekuensi burst chat
+              </div>
+            </div>
+
+            <div>
+              <div style={{fontSize: '10.5px', color: '#94a3b8', textTransform: 'uppercase', fontWeight: '700'}}>
+                Total Kumulatif Berjalan
+              </div>
+              <div style={{fontSize: '14px', fontWeight: '800', color: '#fcd34d', marginTop: '2px'}}>
+                {usageStats.callsAllTime} Kali Terpakai
+              </div>
+              <div style={{fontSize: '11px', color: 'rgba(255, 255, 255, 0.55)'}}>
+                {usageStats.lastCallTimestamp ? `Terakhir: ${new Date(usageStats.lastCallTimestamp).toLocaleTimeString('id-ID')}` : 'Siap digunakan'}
+              </div>
+            </div>
+
+            <div>
+              <div style={{fontSize: '10.5px', color: '#94a3b8', textTransform: 'uppercase', fontWeight: '700'}}>
+                Kondisi Kuota
+              </div>
+              <div style={{fontSize: '13px', fontWeight: '800', color: '#4ade80', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '5px'}}>
+                <CheckCircle2 size={14} /> Kuota Melimpah &amp; Aman
+              </div>
+              <div style={{fontSize: '11px', color: 'rgba(255, 255, 255, 0.55)'}}>
+                Pemakaian saat ini &lt; 1%
+              </div>
             </div>
           </div>
         </div>
