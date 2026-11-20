@@ -139,7 +139,7 @@ export function JatiFloatingCopilot({
         {
           id: 'welcome',
           sender: 'jati',
-          text: `Halo ${name}! Saya **Jati AI**, Copilot analitik Anda 🌱.\nRadar data saya terhubung ke Google Gemini dan memantau **${scopeLabel}** (${period}).\n\nSilakan klik **"What's Next?"** di atas atau tanyakan kondisi spesifik wilayah (contoh: *"apa yang harus ditingkatkan dari RO Semarang?"*).`,
+          text: `Halo ${name}! Saya Jati AI, rekan analitik Anda 🌱.\nRadar data saya terhubung ke Google Gemini dan siap memantau data ${scopeLabel} periode ${period}.\n\nBos bisa klik tombol "What's Next?" di atas untuk langkah taktis hari ini, atau tanyakan langsung kondisi wilayah ke saya, misalnya: "apa yang harus ditingkatkan dari RO Semarang?".`,
           modelBadge: 'Gemini 3.8 Flash Online',
           timestamp: 'Sekarang',
         },
@@ -274,11 +274,11 @@ export function JatiFloatingCopilot({
 
     let prompt = '';
     if (actionKey === 'summary') {
-      prompt = `Berikan ringkasan eksekutif kinerja ${scopeLabel} (${period}) meliputi realisasi vs target, sisa gap, produktivitas SF, dan pipeline aktif.`;
+      prompt = `Bos meminta ringkasan kinerja terkini untuk ${scopeLabel} periode ${period}. Tolong jelaskan bagaimana capaian realisasi vs target, sisa gap, produktivitas tim Sales Force, dan potensi pipeline aktif yang bisa dimaksimalkan hari ini secara mengalir santai layaknya kita sedang chatan.`;
     } else if (actionKey === 'q3') {
-      prompt = `Bedah titik kritis cabang-cabang kuadran Q3 dan Q4 di ${scopeLabel}. Apa akar masalah utamanya dan tindakan cepat yang harus dilakukan hari ini?`;
+      prompt = `Bos ingin kita bedah titik kritis cabang-cabang kuadran Q3 dan Q4 di ${scopeLabel}. Apa akar kendala utamanya di lapangan dan aksi konkret apa yang bisa langsung dieksekusi hari ini? Ceritakan dengan gaya chat langsung yang komunikatif dan solutif.`;
     } else {
-      prompt = `Analisis kapasitas tim Sales Force (SF) di ${scopeLabel}. Berapa rata-rata produktivitas saat ini dan bagaimana strategi meningkatkan closing per personel?`;
+      prompt = `Bos ingin menganalisis kapasitas tim Sales Force (SF) di ${scopeLabel}. Berapa rata-rata produktivitas saat ini dan bagaimana strategi taktis meningkatkan closing harian mereka? Sampaikan dalam bentuk obrolan santai dan actionable.`;
     }
 
     try {
@@ -364,74 +364,95 @@ export function JatiFloatingCopilot({
     }
   };
 
+  const cleanChatString = (text: string): string => {
+    if (!text) return '';
+    return text
+      .replace(/\*"/g, '"')
+      .replace(/"\*/g, '"')
+      .replace(/\*\*/g, '')
+      .replace(/(^|[^\w])\*([^\w]|$)/g, '$1$2')
+      .replace(/^#{1,6}\s+/gm, '')
+      .replace(/^[-*_]{3,}$/gm, '')
+      .trim();
+  };
+
   const handleCopy = (text: string, id: string) => {
-    navigator.clipboard.writeText(text);
+    navigator.clipboard.writeText(cleanChatString(text));
     setCopiedId(id);
     setTimeout(() => setCopiedId(null), 2500);
   };
 
-  // Helper to render markdown text with formatting
+  // Helper to render conversational chat text cleanly without raw markdown symbols
   const renderFormattedText = (rawText: string) => {
     const lines = rawText.split('\n');
     return lines.map((line, idx) => {
-      const trimmed = line.trim();
+      let trimmed = line.trim();
       if (!trimmed) {
         return <div key={idx} style={{ height: '8px' }} />;
       }
 
-      // Headers ###
-      if (trimmed.startsWith('### ')) {
-        return (
-          <h4 key={idx} style={{ margin: '12px 0 6px', color: '#38bdf8', fontSize: '14px', fontWeight: '800' }}>
-            {trimmed.replace('### ', '')}
-          </h4>
-        );
-      }
-      if (trimmed.startsWith('## ')) {
-        return (
-          <h3 key={idx} style={{ margin: '14px 0 8px', color: '#4ade80', fontSize: '15px', fontWeight: '800' }}>
-            {trimmed.replace('## ', '')}
-          </h3>
-        );
+      // Strip markdown header hashes e.g. ### or ##
+      trimmed = trimmed.replace(/^#{1,6}\s+/, '');
+
+      // Strip divider lines
+      if (/^[-*_]{3,}$/.test(trimmed)) {
+        return <div key={idx} style={{ height: '1px', background: 'rgba(255, 255, 255, 0.08)', margin: '8px 0' }} />;
       }
 
-      // Bullet points
-      if (trimmed.startsWith('* ') || trimmed.startsWith('- ') || trimmed.startsWith('• ')) {
-        const itemContent = trimmed.substring(2);
+      // Bullet points (•, *, -, +)
+      const bulletMatch = trimmed.match(/^[*•+-]\s+(.*)/);
+      if (bulletMatch) {
         return (
-          <div key={idx} style={{ display: 'flex', gap: '8px', marginBottom: '4px', paddingLeft: '4px' }}>
-            <span style={{ color: '#2ed573' }}>•</span>
-            <span>{parseBold(itemContent)}</span>
+          <div key={idx} style={{ display: 'flex', gap: '8px', marginBottom: '6px', paddingLeft: '2px', alignItems: 'flex-start' }}>
+            <span style={{ color: '#2ed573', fontSize: '13px', lineHeight: '1.5' }}>•</span>
+            <span style={{ flex: 1, lineHeight: '1.55', color: '#f1f5f9' }}>
+              {renderCleanInline(bulletMatch[1])}
+            </span>
           </div>
         );
       }
 
-      // Numbered lists e.g. 1. 2.
-      const numMatch = trimmed.match(/^(\d+)\.\s+(.*)/);
+      // Numbered lists e.g. 1. or 1)
+      const numMatch = trimmed.match(/^(\d+)[.)]\s+(.*)/);
       if (numMatch) {
         return (
-          <div key={idx} style={{ display: 'flex', gap: '8px', marginBottom: '4px', paddingLeft: '4px' }}>
-            <strong style={{ color: '#38bdf8' }}>{numMatch[1]}.</strong>
-            <span>{parseBold(numMatch[2])}</span>
+          <div key={idx} style={{ display: 'flex', gap: '8px', marginBottom: '6px', paddingLeft: '2px', alignItems: 'flex-start' }}>
+            <span style={{ color: '#38bdf8', fontWeight: 700, fontSize: '13px', lineHeight: '1.5', minWidth: '18px' }}>
+              {numMatch[1]}.
+            </span>
+            <span style={{ flex: 1, lineHeight: '1.55', color: '#f1f5f9' }}>
+              {renderCleanInline(numMatch[2])}
+            </span>
           </div>
         );
       }
 
       return (
-        <p key={idx} style={{ margin: '4px 0', lineHeight: '1.5' }}>
-          {parseBold(trimmed)}
+        <p key={idx} style={{ margin: '6px 0', lineHeight: '1.55', color: '#f1f5f9' }}>
+          {renderCleanInline(trimmed)}
         </p>
       );
     });
   };
 
-  function parseBold(text: string) {
-    const parts = text.split(/(\*\*.*?\*\*)/g);
+  function renderCleanInline(text: string): React.ReactNode {
+    // 1. Clean quotation asterisk artifacts like *" or "*
+    let sanitized = text.replace(/\*"/g, '"').replace(/"\*/g, '"');
+
+    // 2. Parse bold blocks (**text**) so that text is bolded but asterisks are NEVER shown!
+    const parts = sanitized.split(/(\*\*.*?\*\*)/g);
     return parts.map((part, i) => {
-      if (part.startsWith('**') && part.endsWith('**')) {
-        return <strong key={i} style={{ color: '#f1f5f9' }}>{part.slice(2, -2)}</strong>;
+      if (part.startsWith('**') && part.endsWith('**') && part.length > 4) {
+        const cleanContent = part.slice(2, -2).replace(/\*/g, '');
+        return (
+          <strong key={i} style={{ color: '#ffffff', fontWeight: 700 }}>
+            {cleanContent}
+          </strong>
+        );
       }
-      return part;
+      // In normal text segments, strip any stray asterisks or backticks
+      const cleanSeg = part.replace(/\*/g, '').replace(/`/g, '');
+      return cleanSeg;
     });
   }
 
@@ -676,7 +697,7 @@ export function JatiFloatingCopilot({
                       </button>
 
                       <a
-                        href={`https://api.whatsapp.com/send?text=${encodeURIComponent(msg.text || '')}`}
+                        href={`https://api.whatsapp.com/send?text=${encodeURIComponent(cleanChatString(msg.text || ''))}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         style={{

@@ -370,7 +370,7 @@ export async function askJatiGemini(params: AskJatiParams): Promise<AskJatiResul
       const gap = Math.max(0, d.target - d.real);
       const prodPerSf = d.sf > 0 ? fmtRp(d.real / d.sf) : 'Rp 0';
       const areaListStr = d.areas.map(a => `${a.area_name}: Real ${fmtRp(a.achievement_rp)}/${fmtRp(a.target_rp)} (${((a.attainment_pct || 0) * 100).toFixed(1)}%, ${a.quadrant_code || 'Q-'}, SF:${a.sf_active_total || 0}, Pipe:${fmtRp(a.pipeline_active_rp)})`).join('; ');
-      return `- **${roName}**: Realisasi ${fmtRp(d.real)} (${pct}%) | Target ${fmtRp(d.target)} | Gap ${fmtRp(gap)} | SF: ${d.sf} (Prod: ${prodPerSf}/SF) | Pipeline: ${fmtRp(d.pipeline)} | Titik Kritis Q3/Q4: ${d.q3q4Count}/${d.areasCount} cabang.\n  *Area Detail:* ${areaListStr}`;
+      return `• ${roName}: Realisasi ${fmtRp(d.real)} (${pct}%) | Target ${fmtRp(d.target)} | Gap ${fmtRp(gap)} | SF: ${d.sf} (Prod: ${prodPerSf}/SF) | Pipeline: ${fmtRp(d.pipeline)} | Titik Kritis Q3/Q4: ${d.q3q4Count}/${d.areasCount} cabang.\n  Area Detail: ${areaListStr}`;
     })
     .join('\n');
 
@@ -380,29 +380,36 @@ export async function askJatiGemini(params: AskJatiParams): Promise<AskJatiResul
   let specificDrillDown = '';
   if (matchedRoKey) {
     const d = roGroupMap[matchedRoKey];
-    specificDrillDown = `\n### FOKUS DATA KHUSUS ${matchedRoKey} YANG DITANYAKAN USER:\n` +
-      `- Total Realisasi: ${fmtRp(d.real)} (${d.target > 0 ? ((d.real / d.target) * 100).toFixed(1) : 0}%)\n` +
-      `- Total Target: ${fmtRp(d.target)} | Sisa Gap: ${fmtRp(Math.max(0, d.target - d.real))}\n` +
-      `- Total Sales Force: ${d.sf} orang | Pipeline Aktif: ${fmtRp(d.pipeline)}\n` +
-      `- Daftar Cabang/Area di ${matchedRoKey}:\n` +
-      d.areas.map(a => `  • ${a.area_name}: Real ${fmtRp(a.achievement_rp)} dari Target ${fmtRp(a.target_rp)} (${((a.attainment_pct || 0) * 100).toFixed(1)}%), Kuadran ${a.quadrant_code} (${a.quadrant_name || 'N/A'}), SF: ${a.sf_active_total}, Pipeline: ${fmtRp(a.pipeline_active_rp)}, Hambatan/Fokus: ${a.system_focus || a.condition_summary || 'Verifikasi berkas & SLA'}`).join('\n');
+    specificDrillDown = `\nFOKUS DATA KHUSUS ${matchedRoKey} YANG DITANYAKAN USER:\n` +
+      `• Total Realisasi: ${fmtRp(d.real)} (${d.target > 0 ? ((d.real / d.target) * 100).toFixed(1) : 0}%)\n` +
+      `• Total Target: ${fmtRp(d.target)} | Sisa Gap: ${fmtRp(Math.max(0, d.target - d.real))}\n` +
+      `• Total Sales Force: ${d.sf} orang | Pipeline Aktif: ${fmtRp(d.pipeline)}\n` +
+      `• Daftar Cabang/Area di ${matchedRoKey}:\n` +
+      d.areas.map(a => `  - ${a.area_name}: Real ${fmtRp(a.achievement_rp)} dari Target ${fmtRp(a.target_rp)} (${((a.attainment_pct || 0) * 100).toFixed(1)}%), Kuadran ${a.quadrant_code} (${a.quadrant_name || 'N/A'}), SF: ${a.sf_active_total}, Pipeline: ${fmtRp(a.pipeline_active_rp)}, Hambatan/Fokus: ${a.system_focus || a.condition_summary || 'Verifikasi berkas & SLA'}`).join('\n');
   }
 
   // System instruction
   const systemInstruction = `Anda adalah "Jati AI", asisten analitik eksekutif dan AI Copilot resmi PT Eka Akar Jati dalam kemitraan strategis dengan Bank Syariah Indonesia (BSI) dan Bank Mantap.
-Tugas Anda adalah membaca data riil dashboard manajemen dan memberikan analisis tajam, mendalam, taktis, berbasis angka nyata, dan actionable bagi Region Head (RH), Area Manager, dan Direksi.
+Tugas Anda adalah membaca data riil dashboard manajemen dan memberikan analisis tajam, mendalam, taktis, berbasis angka nyata, dan actionable bagi pimpinan (Region Head, Area Manager, Direksi).
 
-PANDUAN MENJAWAB:
-1. DILARANG membatasi jawaban dengan template pendek yang kaku atau jawaban kaleng (canned response). Berikan analisis yang komprehensif, kaya konteks data, dan berwawasan mendalam.
-2. Saat user bertanya tentang wilayah tertentu (misalnya "RO Semarang", "Surabaya", "Area Pekalongan", dsb.), bedah angka aktualnya (Realisasi vs Target, Gap, produktivitas SF, pipeline, kuadran Q3/Q4) dari data yang diberikan di bawah.
-3. Struktur jawaban yang direkomendasikan:
-   - 📊 **Diagnosa Data Aktual:** Paparkan capaian, target, gap, dan metrik produktivitas tim.
-   - 🔍 **Akar Masalah & Bottleneck Lapangan:** Analisis kenapa drop/tertinggal (misal: penumpukan berkas di KC/KCP, SLIK macet pada pembiayaan komersial vs pensiunan, utilisasi SF, gap pipeline).
-   - ⚡ **Langkah Taktis Prioritas (Harus Apa Hari Ini / 24 Jam):** 3-4 aksi konkret harian.
-   - 🎯 **Strategi Akselerasi Mencapai Target Periode:** Bagaimana menutup gap sebelum akhir bulan.
-   - 📲 **Rekomendasi Pesan WA Instan:** Teks ringkas siap kirim ke Koordinator Area (Korea) / Branch Manager.
-4. Gunakan bahasa Indonesia profesional perbankan/bisnis yang lugas, energik ("Mengakar Lebih Kuat, Melaju Lebih Hebat!"), dan optimis.
-5. Gunakan format markdown rapi dengan bullet points, bold untuk angka penting, dan tabel jika relevan.`;
+GAYA PERCAKAPAN & FORMAT CHAT (SANGAT PENTING):
+1. Berbicaralah dengan gaya percakapan chat langsung yang hangat, santai, solutif, dan ramah seperti rekan kerja atau penasihat ahli yang sedang chatan langsung di WhatsApp.
+2. Sapa pengguna dengan akrab dan hormat (misalnya: "Siap Bos!", "Halo Bos, mari kita bedah datanya...", "Untuk wilayah ini, kondisinya menarik Bos:").
+3. DILARANG KERAS MENGGUNAKAN SIMBOL BINTANG GANDA (**) UNTUK MENEBALKAN KATA. JANGAN gunakan tanda pagar (### atau ##) untuk judul. JANGAN gunakan garis pemisah (---) atau backticks (\`). Tulis teks percakapan yang bersih murni tanpa simbol kode/markdown mentah agar terasa seperti pesan WhatsApp yang rapi dan nyaman dibaca.
+4. DILARANG memberikan jawaban kaleng yang pendek atau kaku. Jelaskan angka dan data secara mengalir dalam kalimat percakapan yang hidup dan kaya wawasan bisnis.
+5. Gunakan format chat yang rapi dan terstruktur:
+   - Jeda antar paragraf yang lega (gunakan baris baru kosong antar topik) agar nyaman dibaca di layar chat.
+   - Gunakan penomoran angka biasa yang bersih: 1., 2., 3.
+   - Gunakan poin bulat bersih: •
+   - Gunakan emoji tematik yang menarik dan relevan: 📊, 🔍, ⚡, 🎯, 💡, 📲, 🌱
+6. Jika pengguna bertanya tentang wilayah tertentu (misalnya "RO Semarang", "Surabaya", "Area Pekalongan", dsb.), bedah angka aktualnya dari data di bawah:
+   - Capaian realisasi vs target serta sisa gap saat ini.
+   - Potensi pipeline aktif dan kekuatan Sales Force (SF) di lapangan.
+   - Akar masalah atau bottleneck operasional (misal penumpukan berkas di KC/KCP, SLIK pada pembiayaan komersial vs pensiunan, utilisasi SF).
+   - Langkah taktis 24 jam ke depan yang harus dieksekusi hari ini.
+   - Strategi akselerasi menutup target sebelum akhir periode.
+   - Draf pesan instruksi singkat yang siap diteruskan ke WhatsApp Koordinator Area / Tim Lapangan.
+7. Di akhir respon, berikan kalimat penyemangat khas EKA: "Mengakar Lebih Kuat, Melaju Lebih Hebat! 🌱" atau tawarkan kelanjutan diskusi dengan ramah.`;
 
   const contextDataPrompt = `
 KONDISI DASHBOARD AKTIF SAAT INI:
@@ -423,7 +430,7 @@ ${specificDrillDown}
 `;
 
   const prompt = isWhatsNext
-    ? `User menekan tombol hero "What's Next? (Langkah Hari Ini & Capai Target)" untuk scope ${ro || area || rh || 'Nasional'}. Berikan rencana kerja taktis harian 24 jam ke depan dan strategi menutup gap target!`
+    ? `User menekan tombol hero "What's Next? (Langkah Hari Ini & Capai Target)" untuk scope ${ro || area || rh || 'Nasional'}. Berikan rencana kerja taktis harian 24 jam ke depan dan strategi menutup gap target dengan gaya chat santai, terstruktur rapi, tanpa simbol markdown bintang ganda (**)!`
     : question;
 
   // Attempt API Call
@@ -473,8 +480,16 @@ ${specificDrillDown}
     const estimatedTokens = data?.usageMetadata?.totalTokenCount || 450;
     recordGeminiCall(estimatedTokens);
 
+    // Sanitize response to guarantee zero raw markdown clutter
+    const cleanedReply = replyText
+      .replace(/\*"/g, '"')
+      .replace(/"\*/g, '"')
+      .replace(/\*\*/g, '')
+      .replace(/^#{1,6}\s+/gm, '')
+      .replace(/^[-*_]{3,}$/gm, '');
+
     return {
-      text: replyText,
+      text: cleanedReply,
       model: DEFAULT_GEMINI_MODEL,
       source: 'gemini',
       latencyMs: elapsed,
@@ -499,21 +514,22 @@ function generateRichLocalFallback(params: AskJatiParams, reason: string): AskJa
   const sf = overview?.summary?.sf_active || 0;
 
   return {
-    text: `### 📊 Analisis Cerdas Jati Copilot (${scopeName} - ${period})
-*Mode Analitik Terpasang (Cadangan Offline)*
+    text: `Halo Bos! Ini rangkuman analitik untuk ${scopeName} periode ${period}.
 
-**1. Diagnosa Kinerja Utama:**
-- **Realisasi:** ${fmtRp(real)} (${pct}%) dari Target ${fmtRp(target)}.
-- **Sisa Gap:** ${fmtRp(gap)} menuju target 100%.
-- **Pipeline Aktif:** ${fmtRp(pipeline)} (berpotensi menutup ${gap > 0 ? ((pipeline / gap) * 100).toFixed(0) : 100}% sisa gap).
-- **Sales Force Aktif:** ${sf} personel di lapangan.
+📊 Kondisi Kinerja Aktual:
+• Realisasi tercatat ${fmtRp(real)} (${pct}%) dari target ${fmtRp(target)}.
+• Sisa gap yang perlu dikejar sebesar ${fmtRp(gap)}.
+• Pipeline aktif saat ini mencapai ${fmtRp(pipeline)}, berpotensi menutup ${gap > 0 ? ((pipeline / gap) * 100).toFixed(0) : 100}% sisa gap target.
+• Kekuatan Sales Force aktif di lapangan berjumlah ${sf} personel.
 
-**2. Rekomendasi Taktis Hari Ini:**
-1. Kawal pencairan SP3 siap booking bernilai besar di KC rekanan BSI/Mantap.
-2. Tuntaskan berkas yang tertahan verifikasi data dan pengecekan SLIK.
-3. Dorong minimal 3 prospek harian per Sales Force aktif untuk mempertebal pipeline.
+⚡ Rekomendasi Taktis Hari Ini (24 Jam ke Depan):
+1. Kawal pencairan nasabah siap booking dan SP3 bernilai besar di KC rekanan BSI dan Bank Mantap.
+2. Tuntaskan verifikasi berkas yang tertahan dokumen dan percepat koordinasi SLIK.
+3. Pastikan setiap Sales Force aktif membawa minimal 3 prospek harian untuk menjaga aliran pipeline.
 
-💡 *Catatan:* Endpoint Google Gemini (${DEFAULT_GEMINI_MODEL}) sedang dalam pemulihan jaringan: *${reason}*. Data di atas dihitung langsung dari snapshot dataset master.`,
+💡 Catatan: Respon ini dihasilkan dari snapshot analitik lokal karena koneksi Gemini sedang pemulihan (${reason}). Data tetap akurat sesuai snapshot master.
+
+Mengakar Lebih Kuat, Melaju Lebih Hebat! 🌱`,
     model: 'Jati Local Analytics Engine',
     source: 'local_fallback',
     error: reason,
